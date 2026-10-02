@@ -1,0 +1,6 @@
+buildscript {
+    repositories { google(); mavenCentral() }
+    // Kotlin 2.4 in LiteRT-LM requires R8 9.1.29 or later (AGP 8.5.2+).
+    dependencies { classpath 'com.android.tools:r8:9.1.56' }
+}
+plugins { id 'com.android.application' version '8.7.3' apply false }

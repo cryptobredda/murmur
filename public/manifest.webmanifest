@@ -1,0 +1,29 @@
+{
+  "id": "/",
+  "name": "Murmur \u2014 Free dictation",
+  "short_name": "Murmur",
+  "description": "Free Android speech-to-text with on-device Parakeet dictation, a floating control, saved audio and optional Qwen3 writing.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fcfdfb",
+  "theme_color": "#286557",
+  "categories": [
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

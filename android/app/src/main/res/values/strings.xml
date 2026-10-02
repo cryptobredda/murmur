@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Murmur</string>
+    <string name="overlay_name">Murmur floating dictation</string>
+    <string name="accessibility_description">Shows the Murmur control when an editable text field is focused. Tap to record in the background, tap again to finish, or press Cancel. Drag the control to save its position or drop it at the bottom centre to pause for ten minutes. Murmur inserts dictation at the cursor and can learn spelling corrections. Password fields are ignored.</string>
+</resources>

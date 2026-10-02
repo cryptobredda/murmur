@@ -1,0 +1,47 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'app.murmur.mobile'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 35; versionCode 7; versionName '0.7.0-test'
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        ndk { abiFilters 'arm64-v8a' }
+    }
+    buildFeatures { buildConfig true }
+    buildTypes {
+        debug { debuggable true }
+        release { minifyEnabled false }
+    }
+    // Android extracts these 16 KB-aligned libraries during installation.
+    // Compressing them keeps the test APK small without changing inference.
+    packaging { jniLibs { useLegacyPackaging = true } }
+    compileOptions { coreLibraryDesugaringEnabled true; sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+def sherpaRuntime = layout.buildDirectory.file('native-runtime/sherpa-onnx-1.13.8.aar').get().asFile
+def sherpaChecksum = 'b22c3fc1b6a45666d28892bb2f7694beeb77a8362d7ebd77c1a5431ec9435471'
+def digestFile = { File file ->
+    def digest = java.security.MessageDigest.getInstance('SHA-256')
+    file.withInputStream { input -> byte[] block = new byte[65536]; int count; while ((count = input.read(block)) > 0) digest.update(block, 0, count) }
+    digest.digest().encodeHex().toString()
+}
+def fetchSherpa = tasks.register('fetchSherpaRuntime') {
+    outputs.file(sherpaRuntime)
+    doLast {
+        if (sherpaRuntime.exists() && digestFile(sherpaRuntime) == sherpaChecksum) return
+        sherpaRuntime.parentFile.mkdirs()
+        def partial = new File(sherpaRuntime.path + '.part')
+        def connection = new URL('https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-static-link-onnxruntime-1.13.8.aar').openConnection()
+        connection.connectTimeout = 30000; connection.readTimeout = 60000
+        connection.inputStream.withCloseable { input -> partial.withOutputStream { output -> output << input } }
+        if (digestFile(partial) != sherpaChecksum) { partial.delete(); throw new GradleException('Native speech runtime checksum mismatch') }
+        java.nio.file.Files.move(partial.toPath(), sherpaRuntime.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+}
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
+    implementation files(sherpaRuntime).builtBy(fetchSherpa)
+    implementation 'com.google.ai.edge.litertlm:litertlm-android:0.17.1'
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.core:core:1.15.0'
+    testImplementation 'junit:junit:4.13.2'
+}

@@ -1,0 +1,48 @@
+{
+  "name": "murmur",
+  "private": true,
+  "version": "0.7.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc -b && vite build && node scripts/offline.mjs",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "prebuild": "node scripts/assets.mjs",
+    "predev": "node scripts/assets.mjs",
+    "docs:capture": "npm run build && node scripts/capture-docs.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.58.2",
+    "typescript": "~5.7.3",
+    "vite": "^6.0.5"
+  },
+  "description": "Free, offline Android voice typing with Parakeet speech recognition, floating dictation and optional Qwen3 writing.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cryptobredda/murmur.git"
+  },
+  "homepage": "https://github.com/cryptobredda/murmur",
+  "bugs": {
+    "url": "https://github.com/cryptobredda/murmur/issues"
+  },
+  "keywords": [
+    "android",
+    "speech-to-text",
+    "voice-typing",
+    "dictation",
+    "offline",
+    "parakeet",
+    "qwen",
+    "accessibility"
+  ]
+}
