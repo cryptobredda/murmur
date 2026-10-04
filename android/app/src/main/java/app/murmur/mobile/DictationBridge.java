@@ -13,8 +13,9 @@ public class DictationBridge {
     protected final Context context;
     DictationBridge(Context context){this.context=context;}
     @JavascriptInterface public void configureSpeech(String provider,String model) {
-        context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("provider",provider).putString("model","parakeet-v3").apply();
+        context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("provider",provider).putString("model",NativeSpeech.isSpeechModel(model)?model:"parakeet-v3").apply();
     }
+    @JavascriptInterface public void configureSpeechLanguage(String language){context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("language",language==null?"auto":language).apply();}
     @JavascriptInterface public String deviceInfo() {
         try {
             android.app.ActivityManager.MemoryInfo memory = new android.app.ActivityManager.MemoryInfo();
@@ -32,6 +33,11 @@ public class DictationBridge {
     @JavascriptInterface public void cancelNativeSpeech(String job){NativeSpeech.get(context).cancel(job);}
     @JavascriptInterface public boolean removeNativeSpeech(String model){return NativeSpeech.get(context).remove(model);}
     @JavascriptInterface public String transcribeNativeAudio(String id,String model,boolean fresh){return NativeSpeech.get(context).transcribe(id,model,fresh);}
+    @JavascriptInterface public String transcribeNativeAudioWithLanguage(String id,String model,boolean fresh,String language){return NativeSpeech.get(context).transcribe(id,model,fresh,language);}
+    @JavascriptInterface public String startNativeModelTrial(String id,String model,String language){return NativeSpeech.get(context).trial(id,model,language);}
+    @JavascriptInterface public String speakNativeText(String text){return NativeTts.get(context).speak(text);}
+    @JavascriptInterface public String nativeTtsStatus(String job){return NativeTts.get(context).status(job);}
+    @JavascriptInterface public void cancelNativeTts(String job){NativeTts.get(context).cancel(job);}
     @JavascriptInterface public String editNativeWriting(String model,String messages,int tokens){return NativeWriting.get(context).edit(model,messages,tokens);}
     @JavascriptInterface public String nativeEditingStatus(String job){return NativeWriting.get(context).status(job);}
     @JavascriptInterface public void cancelNativeEditing(String job){NativeWriting.get(context).cancel(job);}

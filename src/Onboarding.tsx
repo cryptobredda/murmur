@@ -169,7 +169,7 @@ export function Onboarding(p: Props) {
                   value={p.settings.language}
                   onChange={(e) => void p.update({ language: e.target.value })}
                 >
-                  {languageOptions(p.settings.provider).map(([code, name]) => (
+                  {languageOptions(p.settings.provider,p.settings.localModel).map(([code, name]) => (
                     <option key={code} value={code}>
                       {name}
                     </option>
@@ -282,7 +282,7 @@ export function Onboarding(p: Props) {
                       </p>
                     </div>
                   )}
-                  <DeviceGuidance />
+                  <DeviceGuidance model={p.settings.localModel} />
                   <p className="fine-print">
                     Keep the app open while it downloads. Complete files are
                     saved and reused if you retry. Manage downloads later in Models.

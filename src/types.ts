@@ -1,7 +1,8 @@
 export type View = "dictate" | "history" | "dictionary" | "models" | "settings";
 export type Provider = "local" | "openai" | "groq" | "custom";
 export type Style = "natural" | "polished" | "verbatim";
-export type LocalModel = "parakeet-v3";
+export type LocalModel = "parakeet-v3" | "nemotron-multilingual" | "nemotron-en";
+export type VoiceModel = "none" | "piper-alba";
 export type EditingModel = "qwen3-native";
 export type EditingProvider = "basic" | "local" | "openai" | "groq" | "custom";
 export type Tone = "neutral" | "formal" | "casual" | "very-casual";
@@ -51,6 +52,7 @@ export interface Snippet {
 export interface Settings {
   provider: Provider;
   localModel: LocalModel;
+  voiceModel: VoiceModel;
   language: string;
   style: Style;
   autoCopy: boolean;
@@ -82,6 +84,7 @@ export interface Settings {
 export const defaults: Settings = {
   provider: "local",
   localModel: "parakeet-v3",
+  voiceModel: "none",
   language: "auto",
   style: "natural",
   autoCopy: true,
@@ -157,28 +160,47 @@ export const models = {
     name: "Parakeet TDT v3", repo: "parakeet-v3", engine: "native", languages: "25 European languages",
     size: "670 MB", description: "600M-parameter native recognition with punctuation and capitalization. Runs offline on your phone after download.", label: "Local speech",
   },
+  "nemotron-multilingual": {
+    name: "Nemotron 3.5 Streaming", repo: "nemotron-multilingual", engine: "native", languages: "28 languages · 32 supported locales",
+    size: "742 MB", description: "600M-parameter multilingual streaming recognition. Processes audio while you speak. Experimental on Android; compare with your saved recordings.", label: "Experimental",
+  },
+  "nemotron-en": {
+    name: "Nemotron Streaming English", repo: "nemotron-en", engine: "native", languages: "English",
+    size: "700 MB", description: "English-only 600M-parameter streaming recognition. Experimental on Android; speed depends on your phone and recording.", label: "Experimental",
+  },
 } as const;
 export function speechModelOptions() { return Object.keys(models) as LocalModel[]; }
-export function supportsSpeechLanguage(_model: LocalModel, language: string) {
-  return language === "auto" || "bg hr cs da nl en et fi fr de el hu it lv lt mt pl pt ro sk sl es sv ru uk".split(" ").includes(language);
+export function supportsSpeechLanguage(model: LocalModel, language: string) {
+  if(language === "auto") return true;
+  if(model === "nemotron-en") return language === "en";
+  if(model === "nemotron-multilingual" && ["en-GB","es-US","fr-CA","pt-PT"].includes(language))return true;
+  const codes = model === "nemotron-multilingual"
+    ? "en es fr it pt nl de tr ru ar hi ja ko vi uk pl sv cs no da bg fi hr sk zh hu ro et"
+    : "bg hr cs da nl en et fi fr de el hu it lv lt mt pl pt ro sk sl es sv ru uk";
+  return codes.split(" ").includes(language);
 }
 // Normalize preferences from upgrades, imports and sync without resetting setup or cloud configuration.
 export function normalizeSettings(saved?: Partial<Settings>): Settings {
-  const result = { ...defaults, ...saved, localModel: "parakeet-v3" as const, editingModel: "qwen3-native" as const };
+  const localModel = saved?.localModel && speechModelOptions().includes(saved.localModel) ? saved.localModel : "parakeet-v3";
+  const result: Settings = { ...defaults, ...saved, localModel, editingModel: "qwen3-native", voiceModel: saved?.voiceModel === "piper-alba" ? "piper-alba" : "none" };
   if (result.provider === "local" && !supportsSpeechLanguage(result.localModel, result.language)) result.language = "auto";
   return result;
 }
-export function languageOptions(provider: Provider) {
-  return languages.filter(([code]) => provider !== "local" || supportsSpeechLanguage("parakeet-v3", code));
+export function languageOptions(provider: Provider, model: LocalModel = "parakeet-v3") {
+  return languages.filter(([code]) => provider !== "local" ? !code.includes("-") : supportsSpeechLanguage(model, code));
 }
 export const languages = [
   ["auto", "Detect language"],
   ["en", "English"],
+  ["en-GB", "English (UK)"],
   ["es", "Spanish"],
+  ["es-US", "Spanish (US)"],
   ["fr", "French"],
+  ["fr-CA", "French (Canada)"],
   ["de", "German"],
   ["it", "Italian"],
   ["pt", "Portuguese"],
+  ["pt-PT", "Portuguese (Portugal)"],
   ["ja", "Japanese"],
   ["ko", "Korean"],
   ["zh", "Chinese"],

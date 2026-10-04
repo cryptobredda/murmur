@@ -21,3 +21,7 @@ Debug builds are for development. Different debug signing keys cannot update eac
 Google Play needs a signed App Bundle, current target-SDK compliance, listing, privacy policy, Data safety form, and applicable accessibility/foreground-service declarations. Check current store policy before submission.
 
 There is no iOS implementation. An App Store release requires a separate app, platform-appropriate input integration, signing, and testing. Android's accessibility overlay is not an iOS API.
+
+## Experimental models and readback
+
+For 0.8.0, compare Nemotron and Parakeet on the same saved audio using the in-app tool, including older 4–6 GB and 8 GB phones. Confirm cancellation preserves recordings and releases wakefulness. Test Piper playback, Stop, audio-focus loss, leaving the app, and starting microphone capture during readback. Review the GPL-3.0 eSpeak NG attribution and corresponding-source links in MODEL-NOTICES.md before distributing binaries; the app source licence does not replace runtime obligations.

@@ -4,12 +4,16 @@ The APK installation minimum is Android 8 / API 26 and ARM64. This does not esta
 
 | Configuration | Recommended advertised RAM | Free storage before download |
 | --- | --- | --- |
-| Parakeet speech + Smart cleanup | 8 GB | 1.5 GB |
-| Parakeet speech + Qwen3 writing | 12 GB | 3 GB |
+| Parakeet or experimental Nemotron + Smart cleanup | 8 GB | 1.5 GB |
+| One speech model + Qwen3 writing | 12 GB | 3 GB |
 
-Prefer Android 13+ and a recent flagship processor such as Snapdragon 8 Gen 2, 8 Gen 3, or 8 Elite. Android 13 improves insertion into modern editors through its accessibility input connection. Murmur's assessment allows for RAM reserved by Android.
+For Piper readback alone, start with 4 GB RAM and 150 MB free storage. This is a practical recommendation, not a certified minimum.
+
+Prefer Android 13+ and Snapdragon 8-series, Dimensity 8000/9000-series or comparable processors. Android 13 improves insertion into modern editors through its accessibility input connection. Murmur's assessment allows for RAM reserved by Android.
 
 These are practical recommendations, not vendor-certified minimums or guaranteed processing times. Recording length, heat, memory pressure, and writing can increase latency. Saved audio needs additional storage. The Galaxy S25 Ultra belongs to the intended class of recent flagship phones; other devices need testing.
+
+Many phones released in the past five years meet the installation requirements, but a 4–6 GB older midrange phone may process the 600M ASR models slowly or experience memory pressure. The experimental models do not require a GPU. Use the saved-recording comparison to check suitability on the actual device. Installing all offered models requires about 3.15 GB in model files; leave at least 4 GB plus recording space. [Detailed model review and test procedure](MOBILE-MODELS.md).
 
 ## Sources
 

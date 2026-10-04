@@ -29,3 +29,10 @@ npm run docs:capture
 The script builds the production bundle, starts a loopback preview, seeds example data, captures rendered UI, and stops the preview. Set `CHROME_EXECUTABLE` to use an installed browser. No microphone or cloud requests are needed.
 
 `brand-cover.png` is generated artwork. `docs/brand/murmur-icon.svg` is the real vector app logo from `public/favicon.svg`. Describe app captures separately from illustrations when reusing these assets.
+# Model preview updates
+
+The model list now includes experimental Nemotron choices. Gallery captures are demonstrations of the UI with fictional bridge/device data; they are not model benchmarks or physical Android device evidence.
+
+## Model preview updates
+
+The model list now includes experimental Nemotron choices. Existing gallery captures demonstrate the UI with fictional bridge/device data; they are not model benchmarks or physical Android device evidence.

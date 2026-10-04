@@ -19,13 +19,14 @@ final class NativeSpeech {
     private final ExecutorService downloads=Executors.newSingleThreadExecutor(), inference=Executors.newSingleThreadExecutor();
     private final Map<String,Job> jobs=new ConcurrentHashMap<>(), live=new ConcurrentHashMap<>();
     private ParakeetRecognizer parakeet;
+    private NemotronRecognizer nemotron;
     private String loaded="";
     static final class Job {
-        final String id=UUID.randomUUID().toString(),model,audioId;
+        final String id=UUID.randomUUID().toString(),model,audioId,language;
         volatile String state="running",file="",error="",text="";
         volatile long loadedBytes,totalBytes;
         volatile boolean cancelled;
-        Job(String model,String audioId){this.model=model;this.audioId=audioId;}
+        Job(String model,String audioId,String language){this.model=model;this.audioId=audioId;this.language=language;}
         String json() {
             try{return new JSONObject().put("state",state).put("file",file).put("loaded",loadedBytes).put("total",totalBytes).put("error",error).put("text",text).toString();}
             catch(Exception e){return "{}";}
@@ -51,7 +52,7 @@ final class NativeSpeech {
         try {
             File root=directory(model);if(!new File(root,"verified-v1").isFile())return false;
             JSONArray files=spec(model).getJSONArray("files");
-            for(int i=0;i<files.length();i++){JSONObject f=files.getJSONObject(i);if(new File(root,f.getString("name")).length()!=f.getLong("size"))return false;}
+            for(int i=0;i<files.length();i++){JSONObject f=files.getJSONObject(i);if(ModelFiles.resolve(root,f.getString("name")).length()!=f.getLong("size"))return false;}
             return true;
         }catch(Exception e){return false;}
     }
@@ -73,8 +74,8 @@ final class NativeSpeech {
         long done=0;
         for(int i=0;i<files.length();i++) {
             check(job);JSONObject f=files.getJSONObject(i);String name=f.getString("name");job.file=name;
-            if(!name.matches("[A-Za-z0-9._-]+"))throw new IOException("Invalid model filename.");
-            File target=new File(root,name),part=new File(root,name+".part");long size=f.getLong("size");
+            File target=ModelFiles.resolve(root,name),part=ModelFiles.resolve(root,name+".part");long size=f.getLong("size");
+            if(!target.getParentFile().isDirectory()&&!target.getParentFile().mkdirs())throw new IOException("Cannot create model folder.");
             if(target.isFile()) {
                 try{verify(target,f);done+=size;job.loadedBytes=done;continue;}
                 catch(IOException invalid){if(!target.delete())throw invalid;}
@@ -85,7 +86,7 @@ final class NativeSpeech {
             if(!"https".equals(url.getProtocol())||!"huggingface.co".equals(url.getHost()))throw new IOException("Invalid model source.");
             if(offset<size) {
                 HttpURLConnection connection=(HttpURLConnection)url.openConnection();connection.setConnectTimeout(30000);connection.setReadTimeout(30000);
-                connection.setRequestProperty("Accept-Encoding","identity");connection.setRequestProperty("User-Agent","Murmur/0.7 (Android)");if(offset>0)connection.setRequestProperty("Range","bytes="+offset+"-");
+                connection.setRequestProperty("Accept-Encoding","identity");connection.setRequestProperty("User-Agent","Murmur/0.8 (Android)");if(offset>0)connection.setRequestProperty("Range","bytes="+offset+"-");
                 try {
                     int code=connection.getResponseCode();
                     if(code!=200&&code!=206)throw new IOException("Model server returned "+code+". Tap Download to resume.");
@@ -105,45 +106,80 @@ final class NativeSpeech {
         check(job);try(FileOutputStream out=new FileOutputStream(new File(root,"verified-v1"))){out.write(1);out.getFD().sync();}
     }
     private void load(String model) throws Exception {
-        if(model.equals(loaded)&&parakeet!=null)return;
-        if(!"parakeet-v3".equals(model))throw new IOException("Choose Parakeet for speech recognition.");
-        if(!present(model))throw new IOException("Download Parakeet inside Murmur first.");
-        if(parakeet!=null){parakeet.close();parakeet=null;loaded="";}
-        parakeet=new ParakeetRecognizer(directory(model));loaded=model;
+        if(model.equals(loaded)&&(parakeet!=null||nemotron!=null))return;
+        if(!isSpeechModel(model))throw new IOException("Choose a speech recognition model.");
+        if(!present(model))throw new IOException("Download this speech model inside Murmur first.");
+        releaseRecognizer();
+        if(model.equals("parakeet-v3"))parakeet=new ParakeetRecognizer(directory(model));
+        else nemotron=new NemotronRecognizer(directory(model));
+        loaded=model;
     }
-    private Job newJob(String model,String audioId){
+    static boolean isSpeechModel(String model){return "parakeet-v3".equals(model)||"nemotron-multilingual".equals(model)||"nemotron-en".equals(model);}
+    private void releaseRecognizer(){
+        if(parakeet!=null){parakeet.close();parakeet=null;}
+        if(nemotron!=null){nemotron.close();nemotron=null;}
+        loaded="";
+    }
+    private String language(){return context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).getString("language","auto");}
+    private Job newJob(String model,String audioId,String language){
         if(jobs.size()>64)for(Job old:jobs.values())if(!old.state.equals("running")){jobs.remove(old.id);live.remove(old.audioId,old);}
-        Job job=new Job(model,audioId);jobs.put(job.id,job);return job;
+        Job job=new Job(model,audioId,language);jobs.put(job.id,job);return job;
     }
     String prepare(String model,boolean cacheOnly) {
-        Job job=newJob(model,"");
+        Job job=newJob(model,"",language());
         downloads.execute(()->{
             try {
                 if(!present(model)){if(cacheOnly)throw new IOException("Download this speech model inside Murmur first.");download(job);}
                 check(job);job.file="Preparing speech model";
-                inference.execute(()->{try{check(job);if(spec(model).optString("engine").equals("writing"))NativeWriting.get(context).prepare(directory(model));else load(model);check(job);job.state="done";}catch(Exception | LinkageError e){fail(job,e);}});
+                inference.execute(()->{try{check(job);String engine=spec(model).optString("engine");if(engine.equals("writing"))NativeWriting.get(context).prepare(directory(model));else if(!engine.equals("tts"))load(model);check(job);job.state="done";}catch(Exception | LinkageError | OutOfMemoryError e){fail(job,e);}});
             }catch(Exception e){fail(job,e);}
         });return job.id;
     }
     void beginCapture(String audioId) {
         android.content.SharedPreferences prefs=context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE);
-        String model="parakeet-v3";
-        if(prefs.getString("provider","").equals("local")&&present(model))submit(audioId,model);
+        String model=prefs.getString("model","parakeet-v3");
+        if(prefs.getString("provider","").equals("local")&&isSpeechModel(model)&&present(model))submit(audioId,model,language());
     }
-    private Job submit(String audioId,String model) {
-        Job job=newJob(model,audioId);live.put(audioId,job);inference.execute(()->runAudio(job));return job;
+    private Job submit(String audioId,String model,String language) {
+        Job job=newJob(model,audioId,language);live.put(audioId,job);inference.execute(()->runAudio(job));return job;
     }
     String transcribe(String audioId,String model,boolean fresh) {
+        return transcribe(audioId,model,fresh,language());
+    }
+    String transcribe(String audioId,String model,boolean fresh,String language) {
         Job existing=live.get(audioId);
-        if(!fresh&&existing!=null&&existing.model.equals(model)&&!existing.cancelled&&!existing.state.equals("error"))return existing.id;
+        if(!fresh&&existing!=null&&existing.model.equals(model)&&existing.language.equals(language)&&!existing.cancelled&&!existing.state.equals("error"))return existing.id;
         if(existing!=null)existing.cancelled=true;
-        return submit(audioId,model).id;
+        return submit(audioId,model,language).id;
+    }
+    String trial(String audioId,String model,String language){
+        Job job=newJob(model,audioId,language);
+        inference.execute(()->{
+            if(RecordingService.sessionActive()){fail(job,new IOException("Finish dictation before comparing models."));return;}
+            NativeTts.get(context).cancelAll();releaseRecognizer();runAudio(job);
+        });return job.id;
     }
     private void runAudio(Job job) {
-        try { check(job);load(job.model);check(job);runParakeet(job); }
-        catch(Exception | LinkageError e){fail(job,e);}
+        try { check(job);load(job.model);check(job);if(nemotron!=null)runNemotron(job);else runParakeet(job); }
+        catch(Exception | LinkageError | OutOfMemoryError e){fail(job,e);}
         // Release recognition memory after each session; saved audio remains on disk.
-        finally{if(parakeet!=null){parakeet.close();parakeet=null;}loaded="";}
+        finally{releaseRecognizer();}
+    }
+    private void runNemotron(Job job) throws Exception {
+        AudioJournal journal=RecordingService.journal(context);int rate=Integer.parseInt(journal.info(job.audioId).getProperty("sampleRate","16000"));
+        nemotron.begin(job.model.equals("nemotron-en")?"en-US":job.language);
+        try(RandomAccessFile input=new RandomAccessFile(journal.file(job.audioId),"r")) {
+            byte[] bytes=new byte[8192];
+            while(true){
+                check(job);long available=(input.length()-input.getFilePointer())&~1L;
+                if(available==0){if(!RecordingService.isClipRecording(job.audioId))break;Thread.sleep(20);continue;}
+                int n=input.read(bytes,0,(int)Math.min(bytes.length,available));if(n<2)continue;
+                float[] samples=new float[n/2];for(int i=0;i<samples.length;i++)samples[i]=(short)((bytes[i*2]&255)|(bytes[i*2+1]<<8))/32768f;
+                nemotron.accept(samples,rate);job.loadedBytes=input.getFilePointer();
+            }
+        }
+        check(job);job.text=nemotron.finish().trim();check(job);
+        if(job.text.isEmpty())throw new IOException("No words recognized. Your recording is saved in History.");job.state="done";
     }
     private void runParakeet(Job job) throws Exception {
         AudioJournal journal=RecordingService.journal(context);int rate=Integer.parseInt(journal.info(job.audioId).getProperty("sampleRate","16000"));
@@ -171,7 +207,10 @@ final class NativeSpeech {
     void cancelAudio(String id){Job job=live.get(id);if(job!=null)job.cancelled=true;}
     boolean remove(String model) {
         if(RecordingService.sessionActive())return false;
+        for(Job job:jobs.values())if(job.model.equals(model)&&job.state.equals("running"))return false;
+        if(model.equals("piper-alba")&&NativeTts.get(context).active())return false;
         if(model.equals("qwen3-native"))NativeWriting.get(context).release();
-        File root=directory(model);File[] files=root.listFiles();if(files!=null)for(File f:files)if(!f.delete())return false;return !root.exists()||root.delete();
+        inference.execute(()->{if(model.equals(loaded))releaseRecognizer();});
+        return ModelFiles.remove(directory(model));
     }
 }

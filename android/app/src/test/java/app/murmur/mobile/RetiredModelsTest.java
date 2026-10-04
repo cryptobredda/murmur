@@ -8,7 +8,7 @@ import static org.junit.Assert.*;
 public class RetiredModelsTest {
     @Test public void upgradeRemovesOnlyRetiredDownloadsAndDoesNotFollowLinks() throws Exception {
         Path root = Files.createTempDirectory("murmur-model-upgrade");
-        for (String name : new String[]{"moonshine-tiny", "moonshine-small", "moonshine-medium", "parakeet-v3", "qwen3-native", "audio"}) {
+        for (String name : new String[]{"moonshine-tiny", "moonshine-small", "moonshine-medium", "parakeet-v3", "qwen3-native", "nemotron-multilingual", "nemotron-en", "piper-alba", "audio"}) {
             Files.createDirectories(root.resolve(name));
             Files.write(root.resolve(name).resolve("saved"), name.getBytes(StandardCharsets.UTF_8));
         }
@@ -17,7 +17,7 @@ public class RetiredModelsTest {
         RetiredModels.remove(root.toFile());
         RetiredModels.remove(root.toFile());
         for (String name : new String[]{"moonshine-tiny", "moonshine-small", "moonshine-medium"}) assertFalse(Files.exists(root.resolve(name)));
-        for (String name : new String[]{"parakeet-v3", "qwen3-native", "audio"}) assertEquals(name, new String(Files.readAllBytes(root.resolve(name).resolve("saved")), StandardCharsets.UTF_8));
+        for (String name : new String[]{"parakeet-v3", "qwen3-native", "nemotron-multilingual", "nemotron-en", "piper-alba", "audio"}) assertEquals(name, new String(Files.readAllBytes(root.resolve(name).resolve("saved")), StandardCharsets.UTF_8));
         assertTrue(Files.exists(outside));
     }
 }

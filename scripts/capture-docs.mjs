@@ -33,7 +33,7 @@ try {
     const demo = window.murmurDemo = { cached: JSON.parse(localStorage.getItem('murmur-demo-cache') || '["parakeet-v3"]'), files: {}, jobs: {}, recording: false, clip: '', sequence: 0 };
     const job = value => { const id = `demo-${++demo.sequence}`; demo.jobs[id] = value; return id; };
     window.MurmurAndroid = {
-      getLaunchContext: () => JSON.stringify({ version: '0.7.0-test' }),
+      getLaunchContext: () => JSON.stringify({ version: '0.8.0-test' }),
       deviceInfo: () => JSON.stringify({ model: 'Android demo device', androidVersion: '16', sdk: 36, ramBytes: 12 * 2 ** 30, freeStorageBytes: 32e9, arm64: true, soc: 'Demo ARM64' }),
       accessibilityEnabled: () => true, configureOverlay: () => {}, configureOverlayAppearance: () => {}, overlayStatus: () => JSON.stringify({ pausedUntil: 0 }), resumeOverlay: () => {},
       backgroundBusy: () => false, pauseBackgroundEngine: () => {}, resumeBackgroundEngine: () => {},
@@ -102,10 +102,10 @@ try {
   await page.evaluate(() => { localStorage.setItem('murmur-demo-cache', '[]'); });
   await page.reload();
   await page.getByRole('button', { name: 'Models', exact: true }).first().click();
-  await page.locator('.model-card').waitFor();
+  await page.locator('.model-card').first().waitFor();
   await capture('models');
-  await page.locator('.model-card').getByRole('button', { name: /Download/ }).click();
-  await page.locator('.model-card').getByRole('button', { name: 'Ready', exact: true }).waitFor();
+  await page.locator('.model-card').first().getByRole('button', { name: /Download/ }).click();
+  await page.locator('.model-card').first().getByRole('button', { name: 'Ready', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Dictate', exact: true }).first().click();
   await page.getByRole('textbox', { name: 'Dictation editor' }).focus();
   const dock = page.locator('.floating-dock');
