@@ -1,7 +1,7 @@
 {
   "name": "murmur",
   "private": true,
-  "version": "0.7.0",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -10,7 +10,8 @@
     "test": "node --test tests/*.test.mjs",
     "prebuild": "node scripts/assets.mjs",
     "predev": "node scripts/assets.mjs",
-    "docs:capture": "npm run build && node scripts/capture-docs.mjs"
+    "docs:capture": "npm run build && node scripts/capture-docs.mjs",
+    "test:ui": "node scripts/check-model-ui.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -25,7 +26,7 @@
     "typescript": "~5.7.3",
     "vite": "^6.0.5"
   },
-  "description": "Free, offline Android voice typing with Parakeet speech recognition, floating dictation and optional Qwen3 writing.",
+  "description": "Free, offline Android voice typing with Parakeet, experimental Nemotron streaming, floating dictation, optional Piper readback and Qwen3 writing.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -43,6 +44,9 @@
     "offline",
     "parakeet",
     "qwen",
-    "accessibility"
+    "accessibility",
+    "nemotron",
+    "piper",
+    "text-to-speech"
   ]
 }

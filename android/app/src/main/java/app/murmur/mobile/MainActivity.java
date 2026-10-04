@@ -47,11 +47,12 @@ import java.util.Map;
 
 public final class MainActivity extends Activity {
     private static volatile boolean visible;
+    private volatile boolean modelTrialActive;
     private static java.lang.ref.WeakReference<MainActivity> active = new java.lang.ref.WeakReference<>(null);
     static void backgroundCompleted(){MainActivity activity=active.get();if(activity!=null&&visible)activity.runOnUiThread(()->{if(activity.webView!=null)activity.webView.evaluateJavascript("window.dispatchEvent(new Event('murmur-native-launch'))",null);});}
     static boolean isVisible() { return visible; }
     static void powerChanged(){MainActivity activity=active.get();if(activity!=null)activity.runOnUiThread(()->{
-        if(RecordingService.sessionActive())activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        if(RecordingService.sessionActive()||activity.modelTrialActive)activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else activity.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     });}
     private static final String ORIGIN = "https://appassets.androidplatform.net";
@@ -214,6 +215,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onPause() {
         visible=false;
+        modelTrialActive=false;powerChanged();NativeTts.get(this).cancelAll();
         if(webView!=null)webView.evaluateJavascript("window.dispatchEvent(new Event('murmur-native-background'))",null);
         super.onPause();
     }
@@ -248,6 +250,7 @@ public final class MainActivity extends Activity {
     }
 
     public final class AndroidBridge extends DictationBridge {
+        @JavascriptInterface public void keepModelTrialAwake(boolean active){runOnUiThread(()->{modelTrialActive=active&&visible;powerChanged();});}
         AndroidBridge(){super(MainActivity.this);}
         @JavascriptInterface public String getLaunchContext() {
             try { return new JSONObject().put("version", BuildConfig.VERSION_NAME).toString(); }

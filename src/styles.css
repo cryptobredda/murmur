@@ -4470,3 +4470,19 @@ kbd {
 .device-guidance .device-current { padding-top: 10px; border-top: 1px solid #e2e9df; }
 .device-guidance summary { color: var(--green); cursor: pointer; margin-top: 10px; }
 .device-guidance a { color: var(--green); text-decoration: underline; }
+/* Optional model tools remain collapsed until the user opens them. */
+.model-trials,.voice-settings { margin:20px 0; padding:22px; }
+.model-trials>summary,.voice-settings>summary { cursor:pointer; font-weight:650; }
+.model-trials .field { display:grid; gap:8px; margin:16px 0; }
+.model-trials select,.model-trials textarea { width:100%; padding:12px; color:var(--ink,#244139); background:var(--surface,#fffdf7); border:1px solid var(--border,#dfe6da); border-radius:12px; font:inherit; }
+.trial-models { display:grid; gap:12px; margin:16px 0; }
+.trial-models label,.trial-choice { display:flex; align-items:center; gap:10px; font-size:14px; }
+.trial-models input,.trial-choice input { accent-color:#18584a; }
+.trial-actions { display:flex; align-items:center; flex-wrap:wrap; gap:12px; margin:16px 0; }
+.trial-results { overflow-x:auto; margin-top:18px; }
+.trial-results table { width:100%; border-collapse:collapse; font-size:13px; }
+.trial-results th,.trial-results td { text-align:left; padding:10px 8px; border-bottom:1px solid #dfe6da; }
+.trial-results details { margin:14px 0; }
+.trial-results p { white-space:pre-wrap; overflow-wrap:anywhere; }
+.readback-control { grid-column:2/-1; display:flex; gap:10px; flex-wrap:wrap; }
+.hint { font-size:13px; line-height:1.6; color:var(--muted,#637269); }

@@ -89,6 +89,9 @@ import { editWriting, cancelEditing, automaticEditingBudget } from "./writing";
 import { retrySavedAudio } from "./recovery.mjs";
 import { SavedAudio } from "./SavedAudio";
 import { DeviceGuidance } from "./DeviceGuidance";
+import { ModelTrials } from "./ModelTrials";
+import { VoiceSettings } from "./VoiceSettings";
+import { ReadAloud } from "./ReadAloud";
 
 type Phase = "idle" | "starting" | "recording" | "transcribing" | "editing";
 const navigation = [
@@ -282,6 +285,7 @@ function App() {
   const [draft, setDraft] = useState("");
   const [lastRecord, setLastRecord] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [auxBusy,setAuxBusy] = useState(false);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const [seconds, setSeconds] = useState(0);
@@ -532,8 +536,8 @@ function App() {
     return () => clearInterval(timer);
   }, [phase]);
   useEffect(() => {
-    if (loaded) native?.configureSpeech?.(settings.provider,settings.localModel);
-  },[loaded,settings.provider,settings.localModel]);
+    if (loaded) {native?.configureSpeech?.(settings.provider,settings.localModel);native?.configureSpeechLanguage?.(settings.language);}
+  },[loaded,settings.provider,settings.localModel,settings.language]);
   useEffect(() => {
     if (phase === "idle" || native || !navigator.wakeLock) return;
     let lock: WakeLockSentinel | undefined,disposed=false;
@@ -622,7 +626,7 @@ function App() {
   },[native]);
   useEffect(() => {
     if (
-      !loaded || !appActive || backgroundBusy ||
+      !loaded || !appActive || backgroundBusy || auxBusy ||
       settings.provider !== "local" ||
       readyModel === settings.localModel ||
       loadingModel ||
@@ -633,7 +637,7 @@ function App() {
     attemptedLoad.current = settings.localModel;
     void prepareModel(settings.localModel);
   }, [
-    loaded, appActive, backgroundBusy,
+    loaded, appActive, backgroundBusy, auxBusy,
     settings.provider,
     settings.localModel,
     cachedModels,
@@ -746,7 +750,7 @@ function App() {
     }
   }
   async function prepareModel(model: LocalModel) {
-    if (loadingModel) return;
+    if (loadingModel || auxBusy) return;
     const generation = ++modelGeneration.current;
     setLoadingModel(model);
     setModelProgress(0);
@@ -813,7 +817,7 @@ function App() {
   async function beginRecording(
     requestedMode: "dictate" | "command" = "dictate",
   ) {
-    if (!loaded || phaseRef.current !== "idle" || loadingModel || backgroundBusy || native?.backgroundBusy?.()) return;
+    if (!loaded || phaseRef.current !== "idle" || loadingModel || auxBusy || backgroundBusy || native?.backgroundBusy?.()) return;
     setActionError("");
     setRetryRecord(null);
     processingRecord.current=null;
@@ -923,7 +927,7 @@ function App() {
     }
   }
   async function stopRecording(recovery?: Transcript) {
-    if (recovery ? phaseRef.current !== "idle" || backgroundBusy || native?.backgroundBusy?.() : phaseRef.current !== "recording") return;
+    if (recovery ? phaseRef.current !== "idle" || auxBusy || backgroundBusy || native?.backgroundBusy?.() : phaseRef.current !== "recording") return;
     setActionError("");
     setPhase("transcribing");
     phaseRef.current = "transcribing";
@@ -1551,7 +1555,7 @@ function App() {
   const recordButton = (
     <button
       className={`record-button ${isRecording ? "recording" : ""} ${isWorking ? "working" : ""}`}
-      disabled={!loaded || isWorking || !!loadingModel || backgroundBusy}
+      disabled={!loaded || isWorking || !!loadingModel || auxBusy || backgroundBusy}
       aria-label={isWorking ? "Working on dictation" : undefined}
       onPointerDown={(e) => e.preventDefault()}
       onClick={() => actionRef.current()}
@@ -1627,10 +1631,11 @@ function App() {
           <p>{t.raw}</p>
           <span className="transcript-meta">Speech: {t.model}{t.editingModel?` · Writing: ${t.editingModel}`:""}{t.requestedEditingModel&&t.requestedEditingModel!==t.editingModel?` · Configured: ${t.requestedEditingModel}`:""}</span>
         </details>}
+        {!compact&&t.text&&settings.voiceModel==="piper-alba"&&<ReadAloud text={t.text} disabled={phase!=="idle"||backgroundBusy||auxBusy}/>}
         {!compact && t.audioId && t.status !== "recording" && <div className="recording-recovery">
           {t.error && <p className="recording-error">{t.error}</p>}
           <SavedAudio id={t.audioId}/>
-          <button className="text-button" disabled={phase !== "idle" || backgroundBusy} onClick={()=>void stopRecording(t)}><RotateCcw size={14}/>{t.status === "failed" || !t.text ? "Retry saved audio" : "Reprocess audio"}</button>
+          <button className="text-button" disabled={phase !== "idle" || auxBusy || backgroundBusy} onClick={()=>void stopRecording(t)}><RotateCcw size={14}/>{t.status === "failed" || !t.text ? "Retry saved audio" : "Reprocess audio"}</button>
           {t.processingMs !== undefined && t.status === "complete" && <span className="transcript-meta">Ready in {(t.processingMs/1000).toFixed(1)}s after recording</span>}
         </div>}
       </article>
@@ -1671,7 +1676,7 @@ function App() {
         >
           <button
             className={settings.provider === "local" ? "selected" : ""}
-            disabled={!!loadingModel || phase !== "idle"}
+            disabled={!!loadingModel || auxBusy || phase !== "idle"}
             onClick={() => void updateSettings({ provider: "local" })}
           >
             <HardDrive size={18} />
@@ -1680,7 +1685,7 @@ function App() {
           </button>
           <button
             className={settings.provider !== "local" ? "selected" : ""}
-            disabled={!!loadingModel || phase !== "idle"}
+            disabled={!!loadingModel || auxBusy || phase !== "idle"}
             onClick={() => void updateSettings({ provider: "openai" })}
           >
             <Cloud size={18} />
@@ -1695,8 +1700,8 @@ function App() {
               <div>
                 <strong>Your voice stays with you.</strong>
                 <p>
-                  Download a model here, then dictate offline. Parakeet processes
-                  speech in segments while you talk. No account or subscription.
+                  Download a model here, then dictate offline. Speech recognition
+                  runs while you talk. No account or subscription.
                 </p>
               </div>
             </div>
@@ -1712,7 +1717,7 @@ function App() {
                       name="localModel"
                       id={`model-${model}`}
                       checked={settings.localModel === model}
-                      disabled={!!loadingModel || phase !== "idle"}
+                      disabled={!!loadingModel || auxBusy || phase !== "idle"}
                       onChange={() =>
                         void updateSettings({ localModel: model })
                       }
@@ -1736,7 +1741,7 @@ function App() {
                   <button
                     className={`button ${readyModel === model ? "muted" : "secondary"}`}
                     disabled={
-                      !!loadingModel || phase !== "idle" || readyModel === model || !native?.prepareNativeSpeech
+                      !!loadingModel || auxBusy || phase !== "idle" || readyModel === model || !native?.prepareNativeSpeech
                     }
                     onClick={() => void prepareModel(model)}
                   >
@@ -1761,7 +1766,7 @@ function App() {
                     <button
                       className="icon-button delete model-remove"
                       aria-label={`Remove ${models[model].name}`}
-                      disabled={!!loadingModel || phase !== "idle"}
+                      disabled={!!loadingModel || auxBusy || phase !== "idle"}
                       onClick={() =>
                         setConfirm({
                           title: "Remove this downloaded model?",
@@ -1790,7 +1795,8 @@ function App() {
                 </article>
               ))}
             </div>
-            <DeviceGuidance withWriting={settings.editingProvider === "local"} />
+            <DeviceGuidance model={settings.localModel} withWriting={settings.editingProvider === "local"} />
+            <ModelTrials history={history} cached={cachedModels} language={settings.language} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
           </>
         ) : (
           <div className="cloud-panel panel">
@@ -1936,13 +1942,14 @@ function App() {
             </div>
           </div>
         )}
-        <EditingSettings
+        <div inert={auxBusy}><EditingSettings
           settings={settings}
           update={updateSettings}
           download={editing}
           initialKey={editingKey}
           saveKey={saveEditingKey}
-        />
+        /></div>
+        <VoiceSettings settings={settings} update={updateSettings} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
         <div className="bottom-note">
           <HelpCircle size={16} />
           <span>
@@ -2129,7 +2136,7 @@ function App() {
                 <div className="record-panel-footer">
                   <div className="inline-select"><Globe size={15} />
                     <select aria-label="Dictation language" value={settings.language} disabled={phase !== "idle"} onChange={(e) => void updateSettings({language: e.target.value})}>
-                      {languageOptions(settings.provider).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
+                      {languageOptions(settings.provider,settings.localModel).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
                     </select><ChevronDown size={12} />
                   </div>
                   <div className="inline-select"><Sparkles size={14} />

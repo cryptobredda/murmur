@@ -11,11 +11,31 @@ async function moduleFromTypescript(path) {
 const models = await moduleFromTypescript('../src/types.ts');
 const { assessDevice } = await moduleFromTypescript('../src/device.ts');
 
-test('the catalog offers only Parakeet speech and optional native Qwen3 writing', () => {
-  assert.deepEqual(models.speechModelOptions(), ['parakeet-v3']);
+test('the catalog keeps Parakeet as default and adds experimental native Nemotron', () => {
+  assert.deepEqual(models.speechModelOptions(), ['parakeet-v3', 'nemotron-multilingual', 'nemotron-en']);
   assert.deepEqual(models.editingModelOptions(), ['qwen3-native']);
   assert.equal(models.defaults.localModel, 'parakeet-v3');
   assert.equal(models.defaults.editingProvider, 'basic');
+  assert.equal(models.defaults.voiceModel, 'none');
+});
+test('upgrades and imports retain the selected supported ASR and optional voice', () => {
+  for(const localModel of models.speechModelOptions()) {
+    const saved={localModel,language:'en',voiceModel:'piper-alba',onboardingComplete:true};
+    const upgraded=models.normalizeSettings(saved);
+    assert.equal(upgraded.localModel,localModel);
+    assert.equal(upgraded.voiceModel,'piper-alba');
+    assert.equal(upgraded.onboardingComplete,true);
+    assert.deepEqual(models.normalizeSettings(upgraded),upgraded);
+  }
+  assert.equal(models.normalizeSettings({voiceModel:'unknown'}).voiceModel,'none');
+});
+test('Nemotron exposes ready languages and locales without unadapted languages', () => {
+  assert.equal(models.languageOptions('local','nemotron-multilingual').length,33);
+  assert.deepEqual(models.languageOptions('local','nemotron-en').map(([code])=>code),['auto','en']);
+  for(const language of ['ar','ja','hi','tr','en-GB','fr-CA'])assert.ok(models.supportsSpeechLanguage('nemotron-multilingual',language));
+  for(const language of ['el','he','th','sl'])assert.equal(models.supportsSpeechLanguage('nemotron-multilingual',language),false);
+  assert.equal(models.normalizeSettings({localModel:'nemotron-multilingual',language:'ja'}).language,'ja');
+  assert.equal(models.normalizeSettings({localModel:'nemotron-en',language:'ja'}).language,'auto');
 });
 test('upgrading retired models preserves setup, cloud options and personal preferences', () => {
   for (const localModel of ['tiny', 'base', 'small', 'moonshine-tiny', 'moonshine-small', 'moonshine-medium']) {
