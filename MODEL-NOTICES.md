@@ -10,6 +10,8 @@ Model license: Creative Commons Attribution 4.0 International, https://creativec
 
 The in-app download uses the INT8 ONNX conversion published by csukuangfj: https://huggingface.co/csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8 at revision `2bda32ec70b097a55adaa07d9a7173915b43cc78`. This conversion changes the weight format and quantization. Murmur does not fine-tune these weights. The file manifest records pinned SHA-256 checksums. Sherpa-ONNX is Apache-2.0: https://github.com/k2-fsa/sherpa-onnx
 
+The APK also contains a small derived tokenizer vocabulary for personal-word decoding, `speech/parakeet-v3.vocab`. Source: NVIDIA's `tokenizer.json` at revision `541d1f99c6b0c3cd0b11a95167540bb8edefd82b` of the official model repository, under the same CC BY 4.0 attribution. Source SHA-256: `bd321b096832a3f270bd3b2a88823957920f1a5c5ada71114a26ea729d0cbe91`. Murmur converts its 8,192 token pieces and BPE merge ranks into Sherpa's vocabulary format without changing token IDs. The generated vocabulary SHA-256 is `734291878abbba0ac4117e5cc50798bf19077917cc5609102e5037f497a4d447`. Reproduce with `node scripts/build-speech-vocabulary.mjs`. This is a tokenizer-format conversion, not a change to the model weights.
+
 ## Qwen3 1.7B
 
 Creator: Qwen team, Alibaba Cloud. Source and Apache-2.0 license: https://huggingface.co/Qwen/Qwen3-1.7B

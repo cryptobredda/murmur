@@ -54,6 +54,8 @@ export interface Settings {
   localModel: LocalModel;
   voiceModel: VoiceModel;
   language: string;
+  recognitionMode: "accurate" | "fast";
+  englishVariant: "en-GB" | "en-US";
   style: Style;
   autoCopy: boolean;
   removeFillers: boolean;
@@ -86,6 +88,8 @@ export const defaults: Settings = {
   localModel: "parakeet-v3",
   voiceModel: "none",
   language: "auto",
+  recognitionMode: "accurate",
+  englishVariant: "en-GB",
   style: "natural",
   autoCopy: true,
   removeFillers: true,
@@ -173,6 +177,7 @@ export function speechModelOptions() { return Object.keys(models) as LocalModel[
 export function supportsSpeechLanguage(model: LocalModel, language: string) {
   if(language === "auto") return true;
   if(model === "nemotron-en") return language === "en";
+  if(model === "parakeet-v3" && language === "en-GB")return true;
   if(model === "nemotron-multilingual" && ["en-GB","es-US","fr-CA","pt-PT"].includes(language))return true;
   const codes = model === "nemotron-multilingual"
     ? "en es fr it pt nl de tr ru ar hi ja ko vi uk pl sv cs no da bg fi hr sk zh hu ro et"
@@ -183,6 +188,8 @@ export function supportsSpeechLanguage(model: LocalModel, language: string) {
 export function normalizeSettings(saved?: Partial<Settings>): Settings {
   const localModel = saved?.localModel && speechModelOptions().includes(saved.localModel) ? saved.localModel : "parakeet-v3";
   const result: Settings = { ...defaults, ...saved, localModel, editingModel: "qwen3-native", voiceModel: saved?.voiceModel === "piper-alba" ? "piper-alba" : "none" };
+  result.recognitionMode=saved?.recognitionMode==="fast"?"fast":"accurate";
+  result.englishVariant=saved?.englishVariant==="en-US"?"en-US":"en-GB";
   if (result.provider === "local" && !supportsSpeechLanguage(result.localModel, result.language)) result.language = "auto";
   return result;
 }

@@ -76,6 +76,7 @@ export async function editWriting(
     instruction,
     original,
   );
+  if(settings.englishVariant==="en-GB")messages[0].content+=" For English text use British English spelling. Keep personal names, technical identifiers, code and quoted literals exactly as supplied. Do not translate other languages.";
   let result: string;
   if (settings.editingProvider === "local") {
     const maxTokens = Math.min(

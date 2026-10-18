@@ -5,7 +5,7 @@ Murmur bundles a React/TypeScript interface in an Android WebView, with Java ser
 ## Prerequisites
 
 - Node.js 22+, npm, Git, and JDK 21 (`JAVA_HOME` pointing to your JDK).
-- Android SDK platform 35 and Build Tools 35.0.0. Set `ANDROID_HOME` or `ANDROID_SDK_ROOT` to your SDK directory and accept the SDK licences.
+- Android SDK platform 36 and Build Tools 36.0.0. Set `ANDROID_HOME` or `ANDROID_SDK_ROOT` to your SDK directory and accept the SDK licences.
 - Android NDK **28.2.13676358** and CMake **3.31.6**, installed with SDK Manager.
 - Internet for npm, Gradle/Maven dependencies, the pinned native SDK sources, and the checksum-verified Sherpa-ONNX runtime download. Models are downloaded inside the installed app.
 
@@ -22,11 +22,11 @@ cd android
 ./gradlew testDebugUnitTest lintDebug assembleDebug
 ```
 
-On Windows, use `gradlew.bat`. Gradle 8.10.2 is pinned with a distribution checksum. Native dependencies are configured in `android/app/build.gradle`. The pre-build task cross-compiles pinned NeMo-Speech.cpp, GGML and SentencePiece into ARM64 libraries via `scripts/build-nemotron.mjs`. This requires Git and adds time to the first build; later builds are incremental. Sources and generated binaries stay under ignored `android/app/build/nemotron/`. No model weights enter the repository or APK.
+On Windows, use `gradlew.bat`. Gradle 8.11.1 is pinned with a distribution checksum; Android Gradle Plugin 8.9.1 targets API 36. Native dependencies are configured in `android/app/build.gradle`. The pre-build task cross-compiles pinned NeMo-Speech.cpp, GGML and SentencePiece into ARM64 libraries via `scripts/build-nemotron.mjs`. This requires Git and adds time to the first build; later builds are incremental. Sources and generated binaries stay under ignored `android/app/build/nemotron/`. No model weights enter the repository or APK; the small attributed tokenizer vocabulary is bundled.
 
-SDK command-line package names: `platforms;android-35`, `build-tools;35.0.0`, `ndk;28.2.13676358`, `cmake;3.31.6`.
+SDK command-line package names: `platforms;android-36`, `build-tools;36.0.0`, `ndk;28.2.13676358`, `cmake;3.31.6`.
 
-Output: `android/app/build/outputs/apk/debug/app-debug.apk`. The package is `app.murmur.mobile`, currently version `0.8.0-test`. It targets ARM64 phones; x86 emulators cannot run its native inference libraries.
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`. The package is `app.murmur.mobile`, currently version `0.9.0-test` (version code 9, target API 36). It targets ARM64 phones; x86 emulators cannot run its native inference libraries.
 
 ## Install
 
@@ -52,6 +52,12 @@ npm run docs:capture
 Set `CHROME_EXECUTABLE` to use an installed Chromium executable. The script captures the real bundled UI with fictional data and a simulated Android bridge, without reading personal history or recordings. See [IMAGERY.md](IMAGERY.md).
 
 Follow [RELEASE.md](RELEASE.md) before distributing an APK. No signing key is included in this repository.
+
+## Prepare a Play bundle and store pack
+
+After copying the frontend assets, run `./gradlew testDebugUnitTest lintDebug lintRelease bundleRelease` from `android/`. Without upload-signing environment variables this produces an **unsigned review AAB**. It cannot be uploaded to Play until built/signed using your upload key. The release variant is non-debuggable. [Signing instructions](../store/SIGNING.md) describe the four optional environment variables and owner-only Console steps.
+
+`npm run store:assets` regenerates the listing copy/pictures from the production frontend and fictional data; `npm run store:check` checks copy limits, image dimensions/size, opaque icons and required documentation. These checks do not validate signing or guarantee store approval. [Store pack](../store/README.md).
 
 ## Model UI and native checks
 

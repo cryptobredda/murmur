@@ -3,9 +3,11 @@ import { chromium } from 'playwright';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { createServer } from 'node:net';
+import { pathToFileURL } from 'node:url';
+import path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const images = new URL('../docs/images/', import.meta.url);
+const images = process.env.MURMUR_CAPTURE_DIR ? pathToFileURL(path.resolve(process.env.MURMUR_CAPTURE_DIR)+path.sep) : new URL('../docs/images/', import.meta.url);
 await mkdir(images, { recursive: true });
 const reservation = createServer();
 await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
@@ -33,7 +35,7 @@ try {
     const demo = window.murmurDemo = { cached: JSON.parse(localStorage.getItem('murmur-demo-cache') || '["parakeet-v3"]'), files: {}, jobs: {}, recording: false, clip: '', sequence: 0 };
     const job = value => { const id = `demo-${++demo.sequence}`; demo.jobs[id] = value; return id; };
     window.MurmurAndroid = {
-      getLaunchContext: () => JSON.stringify({ version: '0.8.0-test' }),
+      getLaunchContext: () => JSON.stringify({ version: '0.9.0-test' }),
       deviceInfo: () => JSON.stringify({ model: 'Android demo device', androidVersion: '16', sdk: 36, ramBytes: 12 * 2 ** 30, freeStorageBytes: 32e9, arm64: true, soc: 'Demo ARM64' }),
       accessibilityEnabled: () => true, configureOverlay: () => {}, configureOverlayAppearance: () => {}, overlayStatus: () => JSON.stringify({ pausedUntil: 0 }), resumeOverlay: () => {},
       backgroundBusy: () => false, pauseBackgroundEngine: () => {}, resumeBackgroundEngine: () => {},
@@ -79,13 +81,13 @@ try {
       const now = Date.now();
       const rows = [
         { id: 'demo-note', text: 'Three ideas for the weekend:\n1. Visit the farmers market.\n2. Take a walk by the river.\n3. Make time for a good book.', duration: 24, starred: true },
-        { id: 'demo-message', text: 'Hi Alex, could we move our meeting to Thursday at 3 pm? I will send the notes before we meet.', duration: 14, starred: false },
+        { id: 'demo-message', text: 'I’ve organised the theatre visit for Thursday at 3 pm. Please bring the colour samples.', duration: 14, starred: false },
       ];
       rows.forEach((row, index) => {
         transaction.objectStore('history').put({ ...row, raw: row.text, createdAt: now - (index + 1) * 3600000, source: 'local', model: 'Parakeet TDT v3', style: 'natural', status: 'complete', audioId: row.id, editingModel: 'Smart cleanup' });
         window.murmurDemo.files[row.id] = { id: row.id, createdAt: now - (index + 1) * 3600000, updatedAt: now - (index + 1) * 3600000, sampleRate: 16000, bytes: row.duration * 32000, status: 'complete', text: row.text, raw: row.text, model: 'Parakeet TDT v3', editingModel: 'Smart cleanup' };
       });
-      [{ id: 'demo-word-1', spoken: 'murmur', replacement: 'Murmur' }, { id: 'demo-word-2', spoken: 'para keet', replacement: 'Parakeet' }].forEach(row => transaction.objectStore('words').put(row));
+      [{ id: 'demo-word-1', spoken: 'leister', replacement: 'Leicester' }, { id: 'demo-word-2', spoken: 'new castle', replacement: 'Newcastle' }].forEach(row => transaction.objectStore('words').put(row));
       transaction.objectStore('snippets').put({ id: 'demo-snippet', phrase: 'my sign off', text: 'Thanks, and have a lovely day.' });
       transaction.oncomplete = () => { database.close(); resolve(); };
       transaction.onerror = () => reject(transaction.error);
@@ -98,6 +100,9 @@ try {
     await page.getByRole('button', { name: label, exact: true }).first().click();
     await capture(name);
   }
+  await page.getByRole('heading',{name:'Speak naturally',exact:true}).evaluate(element => element.closest('section').scrollIntoView({block:'start',behavior:'instant'}));
+  await delay(150);
+  await page.screenshot({path:new URL('accuracy.png',images).pathname,animations:'disabled'});
   // Show the actual in-app download entry before the speech model is installed.
   await page.evaluate(() => { localStorage.setItem('murmur-demo-cache', '[]'); });
   await page.reload();
@@ -110,6 +115,7 @@ try {
   await page.getByRole('textbox', { name: 'Dictation editor' }).focus();
   const dock = page.locator('.floating-dock');
   await dock.waitFor();
+  await capture('floating-context');
   await dock.screenshot({ path: new URL('floating-idle.png', images).pathname, animations: 'disabled', omitBackground: true });
   await dock.getByRole('button', { name: 'Dictate into focused text field', exact: true }).click();
   await dock.locator('.floating-wave').waitFor();
@@ -119,7 +125,7 @@ try {
   await dock.screenshot({ path: new URL('floating-processing.png', images).pathname, animations: 'disabled', omitBackground: true });
   await dock.getByRole('button', { name: 'Cancel floating dictation', exact: true }).click();
   if (errors.length) throw new Error(`UI errors: ${errors.join('; ')}`);
-  console.log('Captured six app screens and three floating-control previews using fictional data.');
+  console.log('Captured eight app screens and three floating-control previews using fictional data.');
 } finally {
   await browser?.close();
   preview.kill('SIGTERM');

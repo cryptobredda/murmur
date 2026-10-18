@@ -1,0 +1,20 @@
+{
+  "appName": "Murmur",
+  "developerName": "Zyralabs",
+  "supportEmail": "info@zyralabs.xyz",
+  "applicationId": "app.murmur.mobile",
+  "privacyPolicyUrl": "https://github.com/cryptobredda/murmur/blob/release/british-english-store/store/privacy-policy.md",
+  "supportUrl": "https://github.com/cryptobredda/murmur/issues",
+  "googlePlay": {
+    "title": "Murmur: Offline Voice Typing",
+    "shortDescription": "Speak naturally. Type across Android with local AI and your own dictionary.",
+    "fullDescription": "Less typing. More you.\n\nMurmur turns your voice into messages, notes and emails using your existing keyboard. Download a speech model inside the app, then dictate on your phone without a Murmur account, a subscription or a local word quota.\n\nA small floating control appears when you focus a supported text field. Tap to speak, finish when you are ready, and Murmur inserts your words. Clipboard fallback keeps the result available when insertion is unavailable.\n\nMAKE YOUR WORDS YOUR OWN\n• Parakeet speech recognition with punctuation and capitalisation.\n• Accurate recognition uses a wider word search when you have personal dictionary terms. Without saved terms, or in Fast mode, it retains the original decoder.\n• British English spelling, personal words and short phrase corrections.\n• Lightweight Smart cleanup, spoken punctuation and numbered lists.\n• Optional downloaded AI writing, tone and writing profiles.\n\nKEEP YOUR THOUGHTS\n• Searchable dictation history, favourites and editable transcripts.\n• Saved recordings, playback, WAV export and reprocessing.\n• Retry a failed dictation using the saved audio.\n• Dictionary entries and voice snippets for names, terms and repeated text.\n\nYOU CHOOSE WHERE PROCESSING HAPPENS\nLocal speech runs on your phone after its model download. Optional cloud speech and writing use your own provider configuration; provider charges and privacy terms may apply. Optional encrypted sync uses storage you configure. English offline readback is available as a separate voice download.\n\nBUILT FOR ANDROID\nUse the compact floating control with your current keyboard. Move it, adjust its transparency or drag it to the pause area for ten minutes. Recording and processing keep the phone awake only while active.\n\nRequirements: Android 8 or newer and a 64-bit ARM phone. For local speech, start with 8 GB RAM and 1.5 GB free storage for one speech model. Optional local AI writing has a 12 GB RAM recommendation. These are practical recommendations, not certified minimums; accuracy and speed depend on speech, noise, recording length and hardware. Additional models and recordings need more space.\n\nPERMISSIONS\nMicrophone access records speech after you start dictating. The optional Accessibility service finds focused fields, inserts text and can learn corrections to recent dictations after an in-app disclosure and consent. Password fields are excluded. Android shows an active-session notification for background recording and processing. Some protected apps or editors restrict insertion or overlays.\n\nDeveloped by Zyralabs. Free, open-source Android app. Support and privacy enquiries: info@zyralabs.xyz."
+  },
+  "appleDraft": {
+    "name": "Murmur: Voice Notes",
+    "subtitle": "Speak. Save. Find your words.",
+    "promotionalText": "Murmur for iOS is planned as an in-app dictation, history and clipboard companion. This listing is a draft; an iOS app is not available yet.",
+    "keywords": "voice,dictation,speech,notes,transcription,writing,clipboard",
+    "description": "DRAFT — DO NOT SUBMIT.\n\nMurmur by Zyralabs is planned for iOS as an in-app dictation companion with transcript history and clipboard sharing.\n\nThe Android floating control is platform-specific. No iOS binary, confirmed iOS model runtime, iOS performance claim or cross-app overlay is supplied with these assets. Replace this draft description with tested iOS features and capture screenshots from the completed iOS app before submitting to App Store Connect.\n\nSupport: info@zyralabs.xyz"
+  }
+}

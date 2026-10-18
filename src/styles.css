@@ -4486,3 +4486,5 @@ kbd {
 .trial-results p { white-space:pre-wrap; overflow-wrap:anywhere; }
 .readback-control { grid-column:2/-1; display:flex; gap:10px; flex-wrap:wrap; }
 .hint { font-size:13px; line-height:1.6; color:var(--muted,#637269); }
+.setting-row select { max-width:165px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fcfdfb; color:var(--text); font:inherit; font-size:14px; }
+@media(max-width:560px){.setting-row:has(>select){align-items:stretch;flex-direction:column;gap:12px}.setting-row>select{width:100%;max-width:none}}

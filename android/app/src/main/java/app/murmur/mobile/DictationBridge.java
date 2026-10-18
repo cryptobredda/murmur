@@ -16,6 +16,12 @@ public class DictationBridge {
         context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("provider",provider).putString("model",NativeSpeech.isSpeechModel(model)?model:"parakeet-v3").apply();
     }
     @JavascriptInterface public void configureSpeechLanguage(String language){context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("language",language==null?"auto":language).apply();}
+    @JavascriptInterface public void configureRecognition(String mode,String hints){
+        if(hints==null||hints.length()>50000)return;
+        try{new JSONArray(hints);context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("recognitionMode","fast".equals(mode)?"fast":"accurate").putString("hints",hints).apply();}catch(JSONException ignored){}
+    }
+    @JavascriptInterface public String pendingLearnedWords(){return PendingCorrections.peek(context);}
+    @JavascriptInterface public void acknowledgeLearnedWords(String ids){if(ids!=null&&ids.length()<10000)PendingCorrections.acknowledge(context,ids);}
     @JavascriptInterface public String deviceInfo() {
         try {
             android.app.ActivityManager.MemoryInfo memory = new android.app.ActivityManager.MemoryInfo();

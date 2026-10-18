@@ -20,7 +20,8 @@ final class SpeechSegments {
         double energy=0;for(float sample:audio)energy+=sample*sample;
         quiet=audio.length>0&&Math.sqrt(energy/audio.length)<.0015?quiet+audio.length:0;
         boolean forced=count>=maximum;
-        if(forced || count>=rate*6&&quiet>=rate*.85f)flush(forced);
+        // Preserve sentence context around word-finding pauses. Finish still flushes immediately.
+        if(forced || count>=rate*10&&quiet>=rate*1.2f)flush(forced);
     }
     private void flush(boolean forced) throws Exception {
         if(fresh==0)return;

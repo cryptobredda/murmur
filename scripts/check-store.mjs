@@ -1,0 +1,12 @@
+import {readFile,readdir,stat} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const root=new URL('../store/',import.meta.url),listing=JSON.parse(await readFile(new URL('listing.json',root),'utf8'));
+assert.ok(listing.googlePlay.title.length<=30);assert.ok(listing.googlePlay.shortDescription.length<=80);assert.ok(listing.googlePlay.fullDescription.length<=4000);
+assert.ok(listing.appleDraft.name.length<=30);assert.ok(listing.appleDraft.subtitle.length<=30);assert.ok(listing.appleDraft.keywords.length<=100);assert.ok(listing.appleDraft.promotionalText.length<=170);
+assert.equal(listing.supportEmail,'info@zyralabs.xyz');assert.equal(listing.developerName,'Zyralabs');
+const png=async(file,width,height,opaque=false)=>{const bytes=await readFile(new URL(file,root));assert.equal(bytes.subarray(1,4).toString(),'PNG');assert.equal(bytes.readUInt32BE(16),width,file);assert.equal(bytes.readUInt32BE(20),height,file);if(opaque)assert.equal(bytes[25],2,'Opaque RGB required: '+file);assert.ok(bytes.length<8*1024*1024,file+' is too large');};
+await png('google-play/metadata/en-GB/images/icon.png',512,512,true);await png('google-play/metadata/en-GB/images/featureGraphic.png',1024,500,true);
+const screens=await readdir(new URL('google-play/metadata/en-GB/images/phoneScreenshots/',root));assert.equal(screens.length,5);for(const file of screens)await png('google-play/metadata/en-GB/images/phoneScreenshots/'+file,1080,1920);
+await png('apple/drafts/AppIcon-1024.png',1024,1024,true);await png('apple/drafts/brand-card-1320x2868.png',1320,2868);
+for(const file of ['privacy-policy.md','SIGNING.md','google-play/data-safety.md','google-play/permissions.md','google-play/reviewer-instructions.md'])assert.ok((await stat(new URL(file,root))).size>100);
+console.log('Store copy lengths, contact, required documents, five Play images, image dimensions/size and opaque icons passed. iOS remains deferred. Production signing and Console declarations are maintainer steps.');

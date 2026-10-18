@@ -56,7 +56,7 @@ test('upgrading retired models preserves setup, cloud options and personal prefe
 });
 test('local language choices match Parakeet and old unsupported choices become automatic', () => {
   const local = models.languageOptions('local');
-  assert.equal(local.length, 26);
+  assert.equal(local.length, 27);
   assert.ok(local.some(([code]) => code === 'en'));
   assert.ok(!local.some(([code]) => code === 'ar'));
   assert.ok(models.languageOptions('custom').some(([code]) => code === 'ar'));

@@ -1,16 +1,26 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'app.murmur.mobile'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
-        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 35; versionCode 8; versionName '0.8.0-test'
+        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 36; versionCode 9; versionName '0.9.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         ndk { abiFilters 'arm64-v8a' }
     }
     buildFeatures { buildConfig true }
+    signingConfigs {
+        if(System.getenv('MURMUR_UPLOAD_KEYSTORE')){
+            upload {
+                storeFile file(System.getenv('MURMUR_UPLOAD_KEYSTORE'))
+                storePassword System.getenv('MURMUR_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('MURMUR_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('MURMUR_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
-        debug { debuggable true }
-        release { minifyEnabled false }
+        debug { debuggable true; versionNameSuffix '-test' }
+        release { minifyEnabled false; debuggable false; if(signingConfigs.findByName('upload'))signingConfig signingConfigs.upload }
     }
     // Android extracts these 16 KB-aligned libraries during installation.
     // Compressing them keeps the test APK small without changing inference.
@@ -61,5 +71,6 @@ dependencies {
     implementation 'com.google.ai.edge.litertlm:litertlm-android:0.17.1'
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.activity:activity:1.10.1'
     testImplementation 'junit:junit:4.13.2'
 }

@@ -21,12 +21,14 @@ final class NativeSpeech {
     private ParakeetRecognizer parakeet;
     private NemotronRecognizer nemotron;
     private String loaded="";
+    private String loadedOptions="";
     static final class Job {
         final String id=UUID.randomUUID().toString(),model,audioId,language;
+        final RecognitionOptions options;
         volatile String state="running",file="",error="",text="";
         volatile long loadedBytes,totalBytes;
         volatile boolean cancelled;
-        Job(String model,String audioId,String language){this.model=model;this.audioId=audioId;this.language=language;}
+        Job(String model,String audioId,String language,RecognitionOptions options){this.model=model;this.audioId=audioId;this.language=language;this.options=options;}
         String json() {
             try{return new JSONObject().put("state",state).put("file",file).put("loaded",loadedBytes).put("total",totalBytes).put("error",error).put("text",text).toString();}
             catch(Exception e){return "{}";}
@@ -105,25 +107,33 @@ final class NativeSpeech {
         }
         check(job);try(FileOutputStream out=new FileOutputStream(new File(root,"verified-v1"))){out.write(1);out.getFD().sync();}
     }
-    private void load(String model) throws Exception {
-        if(model.equals(loaded)&&(parakeet!=null||nemotron!=null))return;
+    private void load(String model,RecognitionOptions options) throws Exception {
+        if(model.equals(loaded)&&options.signature().equals(loadedOptions)&&(parakeet!=null||nemotron!=null))return;
         if(!isSpeechModel(model))throw new IOException("Choose a speech recognition model.");
         if(!present(model))throw new IOException("Download this speech model inside Murmur first.");
         releaseRecognizer();
-        if(model.equals("parakeet-v3"))parakeet=new ParakeetRecognizer(directory(model));
+        if(model.equals("parakeet-v3"))parakeet=new ParakeetRecognizer(context,directory(model),options);
         else nemotron=new NemotronRecognizer(directory(model));
-        loaded=model;
+        loaded=model;loadedOptions=options.signature();
     }
     static boolean isSpeechModel(String model){return "parakeet-v3".equals(model)||"nemotron-multilingual".equals(model)||"nemotron-en".equals(model);}
     private void releaseRecognizer(){
         if(parakeet!=null){parakeet.close();parakeet=null;}
         if(nemotron!=null){nemotron.close();nemotron=null;}
         loaded="";
+        loadedOptions="";
     }
     private String language(){return context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).getString("language","auto");}
+    private RecognitionOptions options(){
+        android.content.SharedPreferences prefs=context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE);
+        List<String> words=new ArrayList<>();
+        try{JSONArray list=new JSONArray(prefs.getString("hints","[]"));for(int i=0;i<Math.min(200,list.length());i++)if(list.opt(i) instanceof String)words.add(list.getString(i));}catch(JSONException ignored){}
+        try{JSONArray list=new JSONArray(PendingCorrections.peek(context));for(int i=0;i<list.length();i++)words.add(list.getJSONObject(i).getString("replacement"));}catch(JSONException ignored){}
+        return new RecognitionOptions(prefs.getString("recognitionMode","accurate"),words);
+    }
     private Job newJob(String model,String audioId,String language){
         if(jobs.size()>64)for(Job old:jobs.values())if(!old.state.equals("running")){jobs.remove(old.id);live.remove(old.audioId,old);}
-        Job job=new Job(model,audioId,language);jobs.put(job.id,job);return job;
+        Job job=new Job(model,audioId,language,options());jobs.put(job.id,job);return job;
     }
     String prepare(String model,boolean cacheOnly) {
         Job job=newJob(model,"",language());
@@ -131,7 +141,7 @@ final class NativeSpeech {
             try {
                 if(!present(model)){if(cacheOnly)throw new IOException("Download this speech model inside Murmur first.");download(job);}
                 check(job);job.file="Preparing speech model";
-                inference.execute(()->{try{check(job);String engine=spec(model).optString("engine");if(engine.equals("writing"))NativeWriting.get(context).prepare(directory(model));else if(!engine.equals("tts"))load(model);check(job);job.state="done";}catch(Exception | LinkageError | OutOfMemoryError e){fail(job,e);}});
+                inference.execute(()->{try{check(job);String engine=spec(model).optString("engine");if(engine.equals("writing"))NativeWriting.get(context).prepare(directory(model));else if(!engine.equals("tts"))load(model,job.options);check(job);job.state="done";}catch(Exception | LinkageError | OutOfMemoryError e){fail(job,e);}});
             }catch(Exception e){fail(job,e);}
         });return job.id;
     }
@@ -148,7 +158,7 @@ final class NativeSpeech {
     }
     String transcribe(String audioId,String model,boolean fresh,String language) {
         Job existing=live.get(audioId);
-        if(!fresh&&existing!=null&&existing.model.equals(model)&&existing.language.equals(language)&&!existing.cancelled&&!existing.state.equals("error"))return existing.id;
+        if(!fresh&&existing!=null&&existing.model.equals(model)&&existing.language.equals(language)&&existing.options.signature().equals(options().signature())&&!existing.cancelled&&!existing.state.equals("error"))return existing.id;
         if(existing!=null)existing.cancelled=true;
         return submit(audioId,model,language).id;
     }
@@ -160,7 +170,7 @@ final class NativeSpeech {
         });return job.id;
     }
     private void runAudio(Job job) {
-        try { check(job);load(job.model);check(job);if(nemotron!=null)runNemotron(job);else runParakeet(job); }
+        try { check(job);load(job.model,job.options);check(job);if(nemotron!=null)runNemotron(job);else runParakeet(job); }
         catch(Exception | LinkageError | OutOfMemoryError e){fail(job,e);}
         // Release recognition memory after each session; saved audio remains on disk.
         finally{releaseRecognizer();}

@@ -5,8 +5,8 @@ import { models, speechModelOptions, supportsSpeechLanguage, type LocalModel, ty
 import { wordErrorRate } from "./model-trials.mjs";
 
 interface Result { model: LocalModel; elapsedMs: number; audioSeconds: number; text: string; error?: string; wer: ReturnType<typeof wordErrorRate>; }
-export function ModelTrials({ history, cached, language, disabled, onBusy }: {
-  history: Transcript[]; cached: LocalModel[]; language: string; disabled: boolean; onBusy: (busy: boolean) => void;
+export function ModelTrials({ history, cached, language, recognitionMode, disabled, onBusy }: {
+  history: Transcript[]; cached: LocalModel[]; language: string; recognitionMode: "accurate"|"fast"; disabled: boolean; onBusy: (busy: boolean) => void;
 }) {
   const native = androidBridge();
   const clips = history.filter(item => item.audioId && item.status !== "recording" && item.status !== "processing");
@@ -54,7 +54,7 @@ export function ModelTrials({ history, cached, language, disabled, onBusy }: {
         if(controller.signal.aborted)break;
         trialResults.push(result);setResults([...trialResults]);
       }
-      setReport({schemaVersion:1,createdAt:new Date().toISOString(),appVersion:androidLaunch().version,device:androidDevice(),language,
+      setReport({schemaVersion:1,createdAt:new Date().toISOString(),appVersion:androidLaunch().version,device:androidDevice(),language,recognitionMode,
         source:{audioId:clip.audioId,audioSeconds:seconds},reference:exactReference||null,coldModelLoadIncluded:true,writingApplied:false,cancelled:controller.signal.aborted,results:trialResults});
     }catch(error){setError(error instanceof Error?error.message:"Could not read saved audio.");}
     finally{native.keepModelTrialAwake?.(false);abort.current=null;setCurrent("");setRunning(false);onBusy(false);}

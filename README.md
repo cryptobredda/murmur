@@ -23,7 +23,7 @@ Murmur is a free, independent alternative to subscription voice typing tools suc
 
 **No Murmur account. No subscription. No local word quota.** Local dictation works offline after the models download. Optional cloud providers use your credentials and may charge for usage.
 
-**Status:** Android preview, `0.8.0-test`, with experimental Nemotron ASR and optional offline readback. [Build from source](docs/BUILDING.md) today. Prebuilt APKs will appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. Google Play and iOS releases are future work.
+**Status:** Android release candidate, `0.9.0-test`, by **Zyralabs**. Parakeet remains the default. [Build from source](docs/BUILDING.md) or review the [Play Store pack](store/README.md), including listing pictures and signing instructions. [Validation and remaining release steps](docs/REVIEW-0.9.md). Prebuilt APKs will appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. The iOS app is deferred; iOS brand/copy drafts are included.
 
 ## Take a look
 
@@ -67,7 +67,8 @@ App screens use the bundled UI with fictional data and a simulated Android bridg
 
 ### Your vocabulary. Your voice.
 
-- Personal dictionary for names/terms, spoken snippets, and learning from transcript corrections.
+- Personal dictionary for names/terms, spoken snippets, and conservative short phrase learning from transcript corrections, including recent background insertions.
+- Accurate Parakeet decoding can use your dictionary targets while recognising speech; Fast retains the original decoder. British English spelling is configurable. [Changes and accuracy limits →](docs/BRITISH-ENGLISH.md)
 - Smart cleanup for fillers, punctuation commands, self-corrections, and lists.
 - Natural, polished, and verbatim styles; neutral, formal, and casual tones.
 - Configurable writing profiles for email, messages, work chat, notes, and code.
@@ -138,7 +139,7 @@ cd android
 ./gradlew testDebugUnitTest lintDebug assembleDebug
 ```
 
-Requires Node.js 22+, Git, JDK 21, Android SDK 35, NDK 28.2.13676358 and CMake 3.31.6. Output: `android/app/build/outputs/apk/debug/app-debug.apk`. Debug builds use your local signing key; updating an installed APK requires the same key. [Build guide →](docs/BUILDING.md)
+Requires Node.js 22+, Git, JDK 21, Android SDK 36, NDK 28.2.13676358 and CMake 3.31.6. Output: `android/app/build/outputs/apk/debug/app-debug.apk`. Debug builds use your local signing key; updating an installed APK requires the same key. [Build guide →](docs/BUILDING.md)
 
 Device reports, language feedback, docs, and focused contributions are welcome. Keep examples free of personal data. [Contributing →](CONTRIBUTING.md)
 
@@ -157,6 +158,8 @@ Device reports, language feedback, docs, and focused contributions are welcome. 
 ## Credits and licence
 
 App source: [MIT](LICENSE). Separately downloaded model weights retain their own licences: Parakeet **CC BY 4.0**, Qwen3 **Apache-2.0**, multilingual Nemotron **OpenMDW 1.1**, English Nemotron **NVIDIA Open Model License**; the Piper Alba voice card credits a **CC BY 4.0** dataset. [MODEL-NOTICES.md](MODEL-NOTICES.md) records creators and quantized conversions. Sherpa-ONNX, LiteRT-LM and NeMo-Speech.cpp use Apache-2.0; Piper's eSpeak NG phonemizer is **GPL-3.0**, with corresponding source links and notices in the model guide. The MIT app-source licence does not override third-party binary obligations. React/Lucide retain upstream licences; bundled DM Sans/Manrope fonts include SIL Open Font License files in `public/fonts/`.
+
+Developed by **Zyralabs** · Support/privacy: **info@zyralabs.xyz** · [Android privacy policy](store/privacy-policy.md).
 
 <div align="center">
   <img src="docs/brand/murmur-icon.svg" width="40" alt="Murmur logo" />

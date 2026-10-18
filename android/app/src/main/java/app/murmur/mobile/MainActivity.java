@@ -45,9 +45,33 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class MainActivity extends Activity {
+public final class MainActivity extends androidx.activity.ComponentActivity {
     private static volatile boolean visible;
     private volatile boolean modelTrialActive;
+    private boolean disclosureShowing;
+    private boolean systemAccessibilityEnabled(){
+        String enabled=Settings.Secure.getString(getContentResolver(),Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        if(enabled==null)return false;
+        android.content.ComponentName expected=new android.content.ComponentName(this,MurmurAccessibilityService.class);
+        for(String service:enabled.split(":"))if(expected.equals(android.content.ComponentName.unflattenFromString(service)))return true;
+        return false;
+    }
+    private void accessibilityDisclosure(boolean openSettings){
+        if(AccessibilityConsent.accepted(this)){if(openSettings)startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));return;}
+        if(disclosureShowing)return;disclosureShowing=true;
+        android.app.AlertDialog dialog=new android.app.AlertDialog.Builder(this)
+            .setTitle("Use Murmur in other apps")
+            .setMessage("Murmur by Zyralabs uses Android Accessibility to find the focused text field, read its text and cursor position, show the floating control, and insert your dictation. The app name helps choose your writing style. Password fields are excluded.\n\nIf correction learning is on, Murmur reads edits to text it just inserted for up to two minutes and saves short corrections in your personal dictionary. Other typing is not collected.\n\nThis field data stays on your device. Audio or recognised text goes to your chosen provider only when you enable cloud speech or writing. You can turn learning off in Murmur and disable Accessibility in Android Settings at any time.")
+            .setNegativeButton("Not now",(which,button)->AccessibilityConsent.decline(this))
+            .setPositiveButton("Agree and continue",(which,button)->{
+                AccessibilityConsent.accept(this);
+                android.content.SharedPreferences prefs=getSharedPreferences("murmur_overlay",MODE_PRIVATE);
+                MurmurAccessibilityService.configure(this,prefs.getBoolean("enabled",true),prefs.getBoolean("learn",true));
+                if(openSettings)startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                else if(webView!=null)webView.evaluateJavascript("window.dispatchEvent(new Event('murmur-native-launch'))",null);
+            }).create();
+        dialog.setOnCancelListener(which->AccessibilityConsent.decline(this));dialog.setOnDismissListener(which->disclosureShowing=false);dialog.show();
+    }
     private static java.lang.ref.WeakReference<MainActivity> active = new java.lang.ref.WeakReference<>(null);
     static void backgroundCompleted(){MainActivity activity=active.get();if(activity!=null&&visible)activity.runOnUiThread(()->{if(activity.webView!=null)activity.webView.evaluateJavascript("window.dispatchEvent(new Event('murmur-native-launch'))",null);});}
     static boolean isVisible() { return visible; }
@@ -65,6 +89,13 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        getOnBackPressedDispatcher().addCallback(this,new androidx.activity.OnBackPressedCallback(true){
+            @Override public void handleOnBackPressed(){
+                if(handleBackWithinApp())return;
+                setEnabled(false);
+                try{getOnBackPressedDispatcher().onBackPressed();}finally{setEnabled(true);}
+            }
+        });
         active = new java.lang.ref.WeakReference<>(this);
         FrameLayout frame = new FrameLayout(this);
         frame.setBackgroundColor(Color.rgb(252, 253, 251));
@@ -212,6 +243,7 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();visible=true;MurmurAccessibilityService.pauseEngine();powerChanged();
         if (webView != null) {webView.onResume();webView.evaluateJavascript("window.dispatchEvent(new Event('murmur-native-launch'))",null);}
+        if(systemAccessibilityEnabled()&&!AccessibilityConsent.accepted(this)&&!AccessibilityConsent.declined(this))accessibilityDisclosure(false);
     }
     @Override protected void onPause() {
         visible=false;
@@ -236,10 +268,10 @@ public final class MainActivity extends Activity {
             pendingFileRequest = null;
         }
     }
-    @Override public void onBackPressed() {
-        if (RecordingService.isRecording()) {moveTaskToBack(true);return;}
-        if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+    private boolean handleBackWithinApp() {
+        if (RecordingService.isRecording()) {moveTaskToBack(true);return true;}
+        if (webView != null && webView.canGoBack()) {webView.goBack();return true;}
+        return false;
     }
     @Override protected void onDestroy() {
         if(active.get()==this)active.clear();
@@ -262,14 +294,10 @@ public final class MainActivity extends Activity {
             catch (Exception error) { return false; }
         }
         @JavascriptInterface public boolean accessibilityEnabled() {
-            String enabled = Settings.Secure.getString(getContentResolver(),Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-            if (enabled == null) return false;
-            android.content.ComponentName expected = new android.content.ComponentName(MainActivity.this,MurmurAccessibilityService.class);
-            for (String service : enabled.split(":")) if (expected.equals(android.content.ComponentName.unflattenFromString(service))) return true;
-            return false;
+            return AccessibilityConsent.accepted(MainActivity.this)&&systemAccessibilityEnabled();
         }
         @JavascriptInterface public void openAccessibilitySettings() {
-            runOnUiThread(() -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+            runOnUiThread(() -> accessibilityDisclosure(true));
         }
         @JavascriptInterface public void configureOverlay(boolean enabled,boolean learn) {MurmurAccessibilityService.configure(MainActivity.this,enabled,learn);}
         @JavascriptInterface public void configureOverlayAppearance(double opacity){MurmurAccessibilityService.appearance(MainActivity.this,opacity);}

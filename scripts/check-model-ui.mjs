@@ -25,7 +25,7 @@ try{
       return JSON.stringify({state:'done',text:spec.model==='nemotron-multilingual'?'one two four':'one two three'});};
     window.MurmurAndroid={
       getLaunchContext:()=>JSON.stringify({version:'UI fixture'}),deviceInfo:()=>JSON.stringify({model:'Fictional UI fixture',androidVersion:'16',sdk:36,ramBytes:12*2**30,freeStorageBytes:32e9,arm64:true,soc:'Fictional CPU'}),
-      readSecret:()=>'',writeSecret:()=>true,configureSpeech:(provider,model)=>{demo.model=model;},configureSpeechLanguage:language=>{demo.language=language;},
+      readSecret:()=>'',writeSecret:()=>true,configureSpeech:(provider,model)=>{demo.model=model;},configureSpeechLanguage:language=>{demo.language=language;},configureRecognition:(mode,hints)=>{demo.recognitionMode=mode;demo.hints=JSON.parse(hints);},
       configureOverlay:()=>{},configureOverlayAppearance:()=>{},accessibilityEnabled:()=>true,overlayStatus:()=>JSON.stringify({pausedUntil:0}),backgroundBusy:()=>false,
       nativeSpeechModels:()=>JSON.stringify(demo.cache),prepareNativeSpeech:model=>job({kind:'download',model}),nativeSpeechStatus:status,
       cancelNativeSpeech:id=>{demo.cancelled.push(id);demo.jobs[id].cancelled=true;},startNativeModelTrial:(audioId,model,language)=>job({kind:'trial',audioId,model,language}),
@@ -38,9 +38,10 @@ try{
   await page.goto(origin);await page.getByRole('heading',{name:'Your voice. Ready to go.'}).waitFor();
   await page.evaluate(()=>new Promise((resolve,reject)=>{
     const request=indexedDB.open('murmur-local');request.onerror=()=>reject(request.error);request.onsuccess=()=>{
-      const db=request.result,tx=db.transaction(['settings','history'],'readwrite');
+      const db=request.result,tx=db.transaction(['settings','history','words'],'readwrite');
       tx.objectStore('settings').put({id:'preferences',value:{provider:'local',localModel:'parakeet-v3',language:'en',editingProvider:'basic',onboardingComplete:true}});
       tx.objectStore('history').put({id:'fixture-audio',audioId:'fixture-audio',text:'Original saved transcript.',raw:'Original saved transcript.',duration:11,createdAt:1700000000000,source:'local',model:'Parakeet TDT v3',style:'natural',status:'complete',starred:false});
+      tx.objectStore('words').put({id:'fixture-word',spoken:'less ter',replacement:'Leicester'});
       tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
     };
   }));
@@ -71,5 +72,18 @@ try{
   await page.getByRole('button',{name:'Stop readback',exact:true}).click();await page.getByRole('button',{name:'Read aloud',exact:true}).waitFor();
   const saved=await page.evaluate(()=>new Promise(resolve=>{const request=indexedDB.open('murmur-local');request.onsuccess=()=>{const db=request.result,read=db.transaction('history').objectStore('history').get('fixture-audio');read.onsuccess=()=>{resolve(read.result);db.close();};};}));
   assert.equal(saved.text,'Original saved transcript.');assert.equal(saved.audioId,'fixture-audio');assert.equal(saved.status,'complete');
-  assert.deepEqual(errors,[]);console.log('Model UI checks passed: download, persisted selection, comparison/export, cancel/wake release, optional voice and readback. Fictional bridge data; no phone benchmarks.');
+  await page.getByRole('button',{name:'Settings',exact:true}).first().click();
+  assert.equal(await page.getByLabel('Recognition accuracy',{exact:true}).inputValue(),'accurate');
+  assert.equal(await page.getByLabel('English spelling',{exact:true}).inputValue(),'en-GB');
+  await page.waitForFunction(()=>window.modelUiFixture.hints?.includes('Leicester'));
+  await page.getByLabel('Recognition accuracy',{exact:true}).selectOption('fast');
+  await page.getByLabel('English spelling',{exact:true}).selectOption('en-US');
+  await page.waitForFunction(()=>window.modelUiFixture.recognitionMode==='fast');
+  await page.reload();await page.getByRole('button',{name:'Settings',exact:true}).first().click();
+  assert.equal(await page.getByLabel('Recognition accuracy',{exact:true}).inputValue(),'fast');
+  assert.equal(await page.getByLabel('English spelling',{exact:true}).inputValue(),'en-US');
+  await page.getByLabel('Recognition accuracy',{exact:true}).selectOption('accurate');
+  await page.getByLabel('English spelling',{exact:true}).selectOption('en-GB');
+  assert.ok(await page.getByRole('link',{name:'info@zyralabs.xyz',exact:true}).count());
+  assert.deepEqual(errors,[]);console.log('Model UI checks passed: downloads, persisted selection and accuracy/spelling settings, dictionary hints, comparison/export, cancel/wake release, optional voice and readback. Fictional bridge data; no phone benchmarks.');
 }finally{await browser?.close();preview.kill('SIGTERM');}

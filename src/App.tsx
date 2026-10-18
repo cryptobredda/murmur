@@ -89,6 +89,7 @@ import { editWriting, cancelEditing, automaticEditingBudget } from "./writing";
 import { retrySavedAudio } from "./recovery.mjs";
 import { SavedAudio } from "./SavedAudio";
 import { DeviceGuidance } from "./DeviceGuidance";
+import { flushLearnedCorrections } from "./learning.mjs";
 import { ModelTrials } from "./ModelTrials";
 import { VoiceSettings } from "./VoiceSettings";
 import { ReadAloud } from "./ReadAloud";
@@ -538,6 +539,9 @@ function App() {
   useEffect(() => {
     if (loaded) {native?.configureSpeech?.(settings.provider,settings.localModel);native?.configureSpeechLanguage?.(settings.language);}
   },[loaded,settings.provider,settings.localModel,settings.language]);
+  useEffect(()=>{
+    if(loaded)native?.configureRecognition?.(settings.recognitionMode,JSON.stringify(words.map(word=>word.replacement)));
+  },[loaded,settings.recognitionMode,words]);
   useEffect(() => {
     if (phase === "idle" || native || !navigator.wakeLock) return;
     let lock: WakeLockSentinel | undefined,disposed=false;
@@ -648,33 +652,8 @@ function App() {
     if (!loaded) return;
     const collect = async () => {
       try {
-        const learned = JSON.parse(native?.takeLearnedWords?.() || "[]");
-        if (!settingsRef.current.autoLearn || !Array.isArray(learned)) return;
-        for (const term of learned) {
-          if (
-            typeof term.spoken !== "string" ||
-            typeof term.replacement !== "string" ||
-            term.spoken.length > 150 ||
-            term.replacement.length > 200
-          )
-            continue;
-          const word: Word = {
-            id:
-              wordsRef.current.find(
-                (x) => x.spoken.toLowerCase() === term.spoken.toLowerCase(),
-              )?.id || id(),
-            spoken: term.spoken,
-            replacement: term.replacement,
-            updatedAt: Date.now(),
-          };
-          await db.put("words", word);
-          setWords((old) => [
-            ...old.filter(
-              (x) => x.spoken.toLowerCase() !== word.spoken.toLowerCase(),
-            ),
-            word,
-          ]);
-        }
+        const learned=await flushLearnedCorrections({native,words:wordsRef.current,put:(word:Word)=>db.put("words",word),enabled:settingsRef.current.autoLearn});
+        for(const word of learned)setWords(old=>[...old.filter(item=>item.spoken.toLowerCase()!==word.spoken.toLowerCase()),word]);
       } catch {}
     };
     void collect();
@@ -1796,7 +1775,7 @@ function App() {
               ))}
             </div>
             <DeviceGuidance model={settings.localModel} withWriting={settings.editingProvider === "local"} />
-            <ModelTrials history={history} cached={cachedModels} language={settings.language} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
+            <ModelTrials history={history} cached={cachedModels} language={settings.language} recognitionMode={settings.recognitionMode} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
           </>
         ) : (
           <div className="cloud-panel panel">
@@ -2282,7 +2261,7 @@ function App() {
                 <div>
                   <h1>A language of your own.</h1>
                   <p>
-                    Names, favorite phrases, and all the words that make you,
+                    Names, favourite phrases, and all the words that make you,
                     you.
                   </p>
                 </div>
@@ -2324,7 +2303,7 @@ function App() {
                   </strong>
                   <p>
                     {dictionaryTab === "words"
-                      ? "Give a name or term its correct spelling. After transcription, Murmur replaces the phrase you specify."
+                      ? "Give a name or term its correct spelling. Accurate Parakeet recognition uses these terms as hints. Saved replacements also fix the phrase you specify."
                       : "Create a phrase like “my email signature” and expand it into your saved text."}{" "}
                     These apply in Natural and Polished styles.
                   </p>

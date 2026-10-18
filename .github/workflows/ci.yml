@@ -29,13 +29,14 @@ jobs:
           java-version: '21'
       - run: npm ci --ignore-scripts
       - run: npm test
+      - run: npm run store:check
       - run: npm run build
       - run: node scripts/android-assets.mjs
       - name: Set up Android SDK
         uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
         with:
-          packages: 'platforms;android-35 build-tools;35.0.0 ndk;28.2.13676358 cmake;3.31.6'
+          packages: 'platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.31.6'
           log-accepted-android-sdk-licenses: 'false'
-      - name: Android tests, lint, and debug APK
+      - name: Android tests, lint, testing APK and unsigned review bundle
         working-directory: android
-        run: ./gradlew --no-daemon testDebugUnitTest lintDebug assembleDebug
+        run: ./gradlew --no-daemon testDebugUnitTest lintDebug lintRelease assembleDebug bundleRelease

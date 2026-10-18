@@ -1,9 +1,10 @@
 import * as db from './db';
-import {normalizeSettings,models,editingModels,type Settings,type Transcript} from './types';
+import {normalizeSettings,models,editingModels,type Settings,type Transcript,type Word} from './types';
 import {loadModel,cancelLocal,localTranscribe,cloudTranscribe,isModelCached} from './engine';
 import {loadEditingModel,editWriting,cancelEditing,isEditingModelCached,automaticEditingBudget} from './writing';
 import {formatText,chooseProfile,codeFormat,validEditedText} from './core.mjs';
 import {retrySavedAudio} from './recovery.mjs';
+import {flushLearnedCorrections} from './learning.mjs';
 interface Run {id:string;packageName:string;}
 let warming:Promise<void>|null=null;
 let generation=0,speechReady='',editingReady='',currentAbort:AbortController|null=null;
@@ -25,7 +26,10 @@ async function run(request:Run) {
  let pending:Transcript|undefined;const started=performance.now();
  const timer=setTimeout(()=>{abort.abort();cancelLocal();cancelEditing();speechReady='';editingReady='';},165000);
  try {
-  const data=await db.load(),settings=normalizeSettings(data.settings);
+  let data=await db.load();const settings=normalizeSettings(data.settings);
+  const learned=await flushLearnedCorrections({native,words:data.words,put:(word:Word)=>db.put('words',word),enabled:settings.autoLearn});
+  if(learned.length)data=await db.load();
+  native.configureRecognition?.(settings.recognitionMode,JSON.stringify(data.words.map(word=>word.replacement)));
   if(!alive())return;
   if(!settings.onboardingComplete)throw new Error('Finish setup in Murmur first.');
   const info=db.nativeAudioInfo(request.id), prior=data.history.find(record=>record.id===request.id);

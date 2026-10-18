@@ -28,6 +28,8 @@ interface AndroidBridge {
   freezeNativeRecording?(): void;
   cancelNativeRecording?(): void;
   takeLearnedWords?(): string;
+  pendingLearnedWords?(): string;
+  acknowledgeLearnedWords?(ids: string): void;
   readSecret?(slot: string): string;
   setSessionSecret?(slot: string,value: string): boolean;
   backgroundReady?(): void;
@@ -39,6 +41,7 @@ interface AndroidBridge {
   writeSecret?(slot: string, value: string): boolean;
   configureSpeech?(provider: string, model: string): void;
   configureSpeechLanguage?(language: string): void;
+  configureRecognition?(mode: string, hints: string): void;
   keepModelTrialAwake?(active: boolean): void;
   nativeSpeechModels?(): string;
   prepareNativeSpeech?(model: string, cacheOnly: boolean): string;
