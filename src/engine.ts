@@ -32,7 +32,7 @@ export async function isModelCached(model: LocalModel) {
 }
 export async function loadModel(model: LocalModel, onProgress: (p: Progress) => void, cacheOnly = false) {
   const native = window.MurmurAndroid;
-  if (!native?.prepareNativeSpeech) throw new Error("Install the Android APK to run Parakeet locally.");
+  if (!native?.prepareNativeSpeech) throw new Error("Install the Android APK to run speech models locally.");
   await nativeJob(native.prepareNativeSpeech(model, cacheOnly), onProgress);
   speechModel = model;
 }
@@ -42,10 +42,12 @@ export function cancelLocal() {
   speechModel = undefined;
 }
 export async function localTranscribe(_audio: Float32Array, language: string, audioId?: string, fresh = false, signal?: AbortSignal) {
-  if (!speechModel) throw new Error("Load Parakeet inside Murmur first.");
-  if (!supportsSpeechLanguage(speechModel, language)) throw new Error("Parakeet supports 25 European languages. Select a supported language in Settings.");
+  if (!speechModel) throw new Error("Load your speech model inside Murmur first.");
+  if (!supportsSpeechLanguage(speechModel, language)) throw new Error("Select a language supported by this speech model in Settings.");
   if (!audioId || !window.MurmurAndroid?.transcribeNativeAudio) throw new Error("A saved recording is required for native speech recognition.");
-  return (await nativeJob(window.MurmurAndroid.transcribeNativeAudio(audioId, speechModel, fresh), undefined, signal)).text as string;
+  const native = window.MurmurAndroid;
+  const job = native.transcribeNativeAudioWithLanguage?.(audioId,speechModel,fresh,language) ?? native.transcribeNativeAudio!(audioId,speechModel,fresh);
+  return (await nativeJob(job, undefined, signal)).text as string;
 }
 export async function cloudTranscribe(
   audio: Float32Array,

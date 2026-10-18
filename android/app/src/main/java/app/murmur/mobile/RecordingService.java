@@ -60,6 +60,7 @@ public final class RecordingService extends Service {
     static void failed(String message) { lastFailure = message; }
 
     private AudioRecord openMicrophone() {
+        NativeTts.get(this).cancelAll();
         // Some OEM audio drivers reject a speech source or a 16 kHz input.
         // Try the ordinary mic and native hardware rates before giving up.
         for (int rate : new int[]{16000, 48000, 44100}) {

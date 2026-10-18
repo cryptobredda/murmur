@@ -72,7 +72,7 @@ public final class MurmurAccessibilityService extends AccessibilityService {
     };
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     private SharedPreferences preferences() { return getSharedPreferences("murmur_overlay",MODE_PRIVATE); }
-    private boolean enabled() { return preferences().getBoolean("enabled",true); }
+    private boolean enabled() { return AccessibilityConsent.accepted(this)&&preferences().getBoolean("enabled",true); }
     private boolean paused(){return OverlayPause.active(preferences().getLong("paused_until",0),System.currentTimeMillis());}
     private boolean busy() { return state.equals("starting") || state.equals("listening") || state.equals("processing"); }
     private Point display() { Point size = new Point(); manager.getDefaultDisplay().getRealSize(size); return size; }
@@ -98,13 +98,14 @@ public final class MurmurAccessibilityService extends AccessibilityService {
         handler.post(pulse);
     }
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
+        if(!enabled())return;
         AccessibilityNodeInfo node = event.getSource();
         if ((event.getEventType() == AccessibilityEvent.TYPE_VIEW_FOCUSED || event.getEventType() == AccessibilityEvent.TYPE_VIEW_CLICKED)
                 && textField(node)) {
             if (eventField != null) eventField.recycle();
             eventField = AccessibilityNodeInfo.obtain(node);
         }
-        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED && correctionTarget != null
+        if (event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED && preferences().getBoolean("learn",true) && correctionTarget != null
                 && System.currentTimeMillis() < correctionUntil && node != null && correctionTarget.equals(node) && !node.isPassword()) {
             String after = node.getText() == null ? "" : node.getText().toString();
             if (correctionTask != null) handler.removeCallbacks(correctionTask);
@@ -303,7 +304,7 @@ public final class MurmurAccessibilityService extends AccessibilityService {
         boolean inserted=false;
         if(editor!=null && targetPackage.equals(activePackage())){
             inserted=editor.insert(this,text);
-            if(inserted){String deliveredPackage=targetPackage;handler.postDelayed(()->{AccessibilityNodeInfo node=focusedNode();if(node!=null&&deliveredPackage.contentEquals(node.getPackageName()))watchCorrection(node,node.getText()==null?"":node.getText().toString());},150);}
+            if(inserted){String deliveredPackage=targetPackage;handler.postDelayed(()->{AccessibilityNodeInfo node=focusedNode();if(node!=null&&deliveredPackage.contentEquals(node.getPackageName()))watchCorrection(node,node.getText()==null?"":node.getText().toString(),text);},150);}
         }
         else if(target!=null){
             AccessibilityNodeInfo node=focusedNode();
@@ -313,7 +314,7 @@ public final class MurmurAccessibilityService extends AccessibilityService {
                 String value=prefix+(prefix.isEmpty()||Character.isWhitespace(prefix.charAt(prefix.length()-1))?"":" ")+text+(suffix.isEmpty()||Character.isWhitespace(suffix.charAt(0))?"":" ")+suffix;
                 Bundle arguments=new Bundle();arguments.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE,value);
                 inserted=node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT,arguments);
-                if(inserted){int cursor=value.length()-suffix.length();Bundle selection=new Bundle();selection.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT,cursor);selection.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT,cursor);node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION,selection);watchCorrection(node,value);}
+                if(inserted){int cursor=value.length()-suffix.length();Bundle selection=new Bundle();selection.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT,cursor);selection.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT,cursor);node.performAction(AccessibilityNodeInfo.ACTION_SET_SELECTION,selection);watchCorrection(node,value,text);}
             }
         }
         if(!inserted&&clipboard){try{((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("Murmur",text));Toast.makeText(this,"Copied to clipboard",Toast.LENGTH_SHORT).show();}catch(Exception ignored){}}
@@ -321,18 +322,27 @@ public final class MurmurAccessibilityService extends AccessibilityService {
         requestId="";retryAudioId="";state="idle";failure="";RecordingService.endBackgroundSession();clearDestination();refresh();MainActivity.backgroundCompleted();
     }
     private void clearDestination(){editor=null;if(target!=null)target.recycle();target=null;expectedText="";targetPackage="";selectionStart=selectionEnd=0;}
-    private void watchCorrection(AccessibilityNodeInfo node,String value){
-        if(correctionTarget!=null)correctionTarget.recycle();correctionTarget=AccessibilityNodeInfo.obtain(node);correctionBefore=value;correctionUntil=System.currentTimeMillis()+120000;
-        long until=correctionUntil;handler.postDelayed(()->{if(correctionUntil==until){correctionBefore="";if(correctionTarget!=null)correctionTarget.recycle();correctionTarget=null;}},120000);
+    private CorrectionScope correctionScope;
+    private void clearCorrectionWatch(){
+        if(correctionTask!=null)handler.removeCallbacks(correctionTask);correctionTask=null;
+        if(correctionTarget!=null)correctionTarget.recycle();correctionTarget=null;
+        correctionBefore="";correctionUntil=0;correctionScope=null;
+    }
+    private void watchCorrection(AccessibilityNodeInfo node,String value,String inserted){
+        clearCorrectionWatch();if(!preferences().getBoolean("learn",true))return;
+        correctionScope=CorrectionScope.find(value,inserted,node.getTextSelectionEnd());
+        if(correctionScope==null)return;
+        correctionTarget=AccessibilityNodeInfo.obtain(node);correctionBefore=value;correctionUntil=System.currentTimeMillis()+120000;
+        long until=correctionUntil;handler.postDelayed(()->{if(correctionUntil==until)clearCorrectionWatch();},120000);
     }
     private void learn(String before,String after){
         if(System.currentTimeMillis()>correctionUntil||!preferences().getBoolean("learn",true)||before.equals(after))return;
-        String[] a=before.split("[^\\p{L}\\p{N}'’-]+"),b=after.split("[^\\p{L}\\p{N}'’-]+");if(a.length!=b.length)return;
-        int index=-1;for(int i=0;i<a.length;i++)if(!a[i].equals(b[i])){if(index!=-1)return;index=i;}
-        if(index<0||a[index].length()<2||b[index].length()<2||a[index].length()>100||b[index].length()>100)return;
-        try{JSONArray words=new JSONArray(preferences().getString("learned","[]"));if(words.length()<100){words.put(new JSONObject().put("spoken",a[index]).put("replacement",b[index]));preferences().edit().putString("learned",words.toString()).apply();}correctionBefore=after;}catch(Exception ignored){}
+        if(correctionScope==null)return;String scopedBefore=correctionScope.inserted(before),scopedAfter=correctionScope.inserted(after);
+        if(scopedBefore==null||scopedAfter==null)return;
+        String[] term=CorrectionLearning.learn(scopedBefore,scopedAfter);if(term==null)return;
+        PendingCorrections.add(this,term[0],term[1]);correctionBefore=after;
     }
-    static void configure(Context context,boolean enabled,boolean learn){context.getSharedPreferences("murmur_overlay",MODE_PRIVATE).edit().putBoolean("enabled",enabled).putBoolean("learn",learn).apply();MurmurAccessibilityService service=active.get();if(service!=null)service.handler.post(service::refresh);}
+    static void configure(Context context,boolean enabled,boolean learn){context.getSharedPreferences("murmur_overlay",MODE_PRIVATE).edit().putBoolean("enabled",enabled).putBoolean("learn",learn).apply();if(!learn)PendingCorrections.clear(context);MurmurAccessibilityService service=active.get();if(service!=null)service.handler.post(()->{if(!enabled||!learn)service.clearCorrectionWatch();service.refresh();});}
     static void appearance(Context context,double opacity){context.getSharedPreferences("murmur_overlay",MODE_PRIVATE).edit().putFloat("opacity",OverlayPause.opacity(opacity)).apply();MurmurAccessibilityService service=active.get();if(service!=null)service.handler.post(service::refresh);}
     static String overlayStatus(Context context){try{return new JSONObject().put("pausedUntil",context.getSharedPreferences("murmur_overlay",MODE_PRIVATE).getLong("paused_until",0)).toString();}catch(Exception ignored){return "{}";}}
     static void resumeOverlay(Context context){context.getSharedPreferences("murmur_overlay",MODE_PRIVATE).edit().remove("paused_until").apply();MurmurAccessibilityService service=active.get();if(service!=null)service.handler.post(service::refresh);}

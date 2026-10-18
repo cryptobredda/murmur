@@ -155,6 +155,12 @@ export function PreferencesExtras({
           <h2>Speak naturally</h2>
           <Mic size={19} />
         </div>
+        <div className="setting-row"><div><h3>Recognition accuracy</h3><p>Accurate uses a wider Parakeet word search when you have personal dictionary terms. Without saved terms it keeps the original decoder. Fast always uses the original decoder.</p></div>
+          <select aria-label="Recognition accuracy" value={settings.recognitionMode} onChange={event=>void update({recognitionMode:event.target.value as Settings["recognitionMode"]})}><option value="accurate">Accurate</option><option value="fast">Fast</option></select>
+        </div>
+        <div className="setting-row"><div><h3>English spelling</h3><p>Applies to English dictation. Your dictionary, snippets and code keep their spelling.</p></div>
+          <select aria-label="English spelling" value={settings.englishVariant} onChange={event=>void update({englishVariant:event.target.value as Settings["englishVariant"]})}><option value="en-GB">British English</option><option value="en-US">Original / US English</option></select>
+        </div>
         {preference(
           "Understand spoken corrections",
           "Use your final choice when you say “Friday, actually Monday” or “4 pm, actually 3 pm”.",
@@ -167,7 +173,7 @@ export function PreferencesExtras({
         )}
         {preference(
           "Learn spelling corrections",
-          "Learn single-word corrections made to saved dictations or recent text inserted by the floating mic. Other typing is not collected.",
+          "Learn short word and phrase corrections in saved dictations or recently inserted text. Learned terms also guide accurate recognition. Other typing is not collected.",
           "autoLearn",
         )}
       </section>
@@ -407,6 +413,7 @@ export function PreferencesExtras({
           </div>
         )}
       </section>
+      <section className="settings-panel panel"><div className="panel-heading"><h2>About Murmur</h2></div><div className="setting-row"><div><h3>Developed by Zyralabs</h3><p><a href="mailto:info@zyralabs.xyz">info@zyralabs.xyz</a></p><p><a href="https://github.com/cryptobredda/murmur/blob/release/british-english-store/store/privacy-policy.md" target="_blank" rel="noreferrer">Privacy policy</a>{" · "}<a href="https://github.com/cryptobredda/murmur/blob/release/british-english-store/MODEL-NOTICES.md" target="_blank" rel="noreferrer">Model and runtime licences</a></p></div></div></section>
     </>
   );
 }

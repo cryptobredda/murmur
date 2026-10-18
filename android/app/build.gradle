@@ -1,22 +1,50 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'app.murmur.mobile'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
-        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 35; versionCode 7; versionName '0.7.0-test'
+        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 36; versionCode 9; versionName '0.9.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         ndk { abiFilters 'arm64-v8a' }
     }
     buildFeatures { buildConfig true }
+    signingConfigs {
+        if(System.getenv('MURMUR_UPLOAD_KEYSTORE')){
+            upload {
+                storeFile file(System.getenv('MURMUR_UPLOAD_KEYSTORE'))
+                storePassword System.getenv('MURMUR_UPLOAD_STORE_PASSWORD')
+                keyAlias System.getenv('MURMUR_UPLOAD_KEY_ALIAS')
+                keyPassword System.getenv('MURMUR_UPLOAD_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
-        debug { debuggable true }
-        release { minifyEnabled false }
+        debug { debuggable true; versionNameSuffix '-test' }
+        release { minifyEnabled false; debuggable false; if(signingConfigs.findByName('upload'))signingConfig signingConfigs.upload }
     }
     // Android extracts these 16 KB-aligned libraries during installation.
     // Compressing them keeps the test APK small without changing inference.
     packaging { jniLibs { useLegacyPackaging = true } }
+    sourceSets {
+        main.jniLibs.srcDir layout.buildDirectory.dir('nemotron/jniLibs')
+        main.assets.srcDir layout.buildDirectory.dir('nemotron/assets')
+    }
     compileOptions { coreLibraryDesugaringEnabled true; sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
+def buildNemotron = tasks.register('buildNemotronRuntime', Exec) {
+    inputs.file rootProject.file('../scripts/build-nemotron.mjs')
+    inputs.dir file('src/main/cpp')
+    inputs.file rootProject.file('../MODEL-NOTICES.md')
+    inputs.file rootProject.file('../LICENSE')
+    outputs.dir layout.buildDirectory.dir('nemotron/jniLibs')
+    outputs.dir layout.buildDirectory.dir('nemotron/assets')
+    workingDir rootProject.file('..')
+    doFirst {
+        commandLine 'node', rootProject.file('../scripts/build-nemotron.mjs').absolutePath,
+            android.sdkDirectory.absolutePath, layout.buildDirectory.dir('nemotron').get().asFile.absolutePath
+    }
+}
+tasks.named('preBuild').configure { dependsOn(buildNemotron) }
 def sherpaRuntime = layout.buildDirectory.file('native-runtime/sherpa-onnx-1.13.8.aar').get().asFile
 def sherpaChecksum = 'b22c3fc1b6a45666d28892bb2f7694beeb77a8362d7ebd77c1a5431ec9435471'
 def digestFile = { File file ->
@@ -43,5 +71,6 @@ dependencies {
     implementation 'com.google.ai.edge.litertlm:litertlm-android:0.17.1'
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.activity:activity:1.10.1'
     testImplementation 'junit:junit:4.13.2'
 }

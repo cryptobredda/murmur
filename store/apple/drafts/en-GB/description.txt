@@ -1,0 +1,7 @@
+DRAFT — DO NOT SUBMIT.
+
+Murmur by Zyralabs is planned for iOS as an in-app dictation companion with transcript history and clipboard sharing.
+
+The Android floating control is platform-specific. No iOS binary, confirmed iOS model runtime, iOS performance claim or cross-app overlay is supplied with these assets. Replace this draft description with tested iOS features and capture screenshots from the completed iOS app before submitting to App Store Connect.
+
+Support: info@zyralabs.xyz
