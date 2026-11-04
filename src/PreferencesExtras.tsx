@@ -413,7 +413,7 @@ export function PreferencesExtras({
           </div>
         )}
       </section>
-      <section className="settings-panel panel"><div className="panel-heading"><h2>About Murmur</h2></div><div className="setting-row"><div><h3>Developed by Zyralabs</h3><p><a href="mailto:info@zyralabs.xyz">info@zyralabs.xyz</a></p><p><a href="https://github.com/cryptobredda/murmur/blob/release/british-english-store/store/privacy-policy.md" target="_blank" rel="noreferrer">Privacy policy</a>{" · "}<a href="https://github.com/cryptobredda/murmur/blob/release/british-english-store/MODEL-NOTICES.md" target="_blank" rel="noreferrer">Model and runtime licences</a></p></div></div></section>
+      <section className="settings-panel panel"><div className="panel-heading"><h2>About Murmur</h2></div><div className="setting-row"><div><h3>Developed by Zyralabs</h3><p><a href="mailto:info@zyralabs.xyz">info@zyralabs.xyz</a></p><p><a href="https://github.com/cryptobredda/murmur/blob/release/british-english-store/store/privacy-policy.md" target="_blank" rel="noreferrer">Privacy policy</a>{" · "}<a href="https://github.com/cryptobredda/murmur/blob/feature/parakeet-ultra/MODEL-NOTICES.md" target="_blank" rel="noreferrer">Model and runtime licences</a></p></div></div></section>
     </>
   );
 }

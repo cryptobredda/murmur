@@ -728,7 +728,7 @@ function App() {
       say(safeError(e), true);
     }
   }
-  async function prepareModel(model: LocalModel) {
+  async function prepareModel(model: LocalModel, activateAfterLoad = false) {
     if (loadingModel || auxBusy) return;
     const generation = ++modelGeneration.current;
     setLoadingModel(model);
@@ -745,6 +745,9 @@ function App() {
           setModelFile("Getting speech recognition ready on your device…");
         }
       });
+      if (generation !== modelGeneration.current) return;
+      if (activateAfterLoad && !(await updateSettings({ localModel: model })))
+        throw new Error("The model is downloaded, but its selection could not be saved. Your previous model is still selected.");
       if (generation !== modelGeneration.current) return;
       setReadyModel(model);
       setModelProgress(100);
@@ -1684,6 +1687,7 @@ function App() {
                 </p>
               </div>
             </div>
+            <p className="section-description">Download and use a model to switch after it is verified and ready. Your existing selection and saved recordings are kept if the download fails or is cancelled. Keeping both Parakeet models needs about 671 MB of extra storage.</p>
             <div className="model-list">
               {speechModelOptions().map((model) => (
                 <article
@@ -1696,9 +1700,9 @@ function App() {
                       name="localModel"
                       id={`model-${model}`}
                       checked={settings.localModel === model}
-                      disabled={!!loadingModel || auxBusy || phase !== "idle"}
+                      disabled={!!loadingModel || auxBusy || phase !== "idle" || !cachedModels.includes(model)}
                       onChange={() =>
-                        void updateSettings({ localModel: model })
+                        void prepareModel(model, true)
                       }
                     />
                   </div>
@@ -1718,13 +1722,13 @@ function App() {
                     </span>
                   </div>
                   <button
-                    className={`button ${readyModel === model ? "muted" : "secondary"}`}
+                    className={`button ${readyModel === model && settings.localModel === model ? "muted" : "secondary"}`}
                     disabled={
-                      !!loadingModel || auxBusy || phase !== "idle" || readyModel === model || !native?.prepareNativeSpeech
+                      !!loadingModel || auxBusy || phase !== "idle" || readyModel === model && settings.localModel === model || !native?.prepareNativeSpeech
                     }
-                    onClick={() => void prepareModel(model)}
+                    onClick={() => void prepareModel(model, true)}
                   >
-                    {readyModel === model ? (
+                    {readyModel === model && settings.localModel === model ? (
                       <Check size={16} />
                     ) : loadingModel === model ? (
                       <LoaderCircle size={16} className="spin" />
@@ -1732,13 +1736,13 @@ function App() {
                       <Download size={16} />
                     )}
                     <span>
-                      {readyModel === model
+                      {readyModel === model && settings.localModel === model
                         ? "Ready"
                         : loadingModel === model
                           ? "Loading…"
                           : cachedModels.includes(model)
-                            ? "Load model"
-                            : "Download"}
+                            ? "Use model"
+                            : "Download and use"}
                     </span>
                   </button>
                   {cachedModels.includes(model) && (
@@ -2929,6 +2933,9 @@ function App() {
           </div>
           <details className="original-transcription">
             <summary>Local model credits</summary>
+            <p>
+              Parakeet Ultra by <a href="https://huggingface.co/moondream/parakeet-ultra" target="_blank" rel="noreferrer">Moondream</a>, based on NVIDIA Parakeet TDT v3, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. The INT8 ONNX conversion is by <a href="https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8" target="_blank" rel="noreferrer">tpmaerk</a>; its extra VAD head is omitted. Murmur does not fine-tune the weights.
+            </p>
             <p>
               Parakeet TDT v3 by <a href="https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3" target="_blank" rel="noreferrer">NVIDIA</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. The INT8 ONNX conversion is by csukuangfj; Murmur does not fine-tune the weights.
             </p>

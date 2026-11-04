@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.0 — Parakeet Ultra tester update
+
+- Recommend Parakeet Ultra INT8 for new installations, with a pinned 671 MB in-app download and the existing offline CPU/dictionary-guided recognition engine.
+- Preserve existing testers' chosen models, downloads, setup, history, audio, personal vocabulary and provider configuration.
+- Add Download and use: switch selection only after the new model is verified and loaded. Failed/cancelled downloads retain the previous selection; the original Parakeet remains available for comparison or switching back.
+- Add model provenance/licence notices, a reproducible native-model smoke check, upgrade/cancellation tests and a publishing-agent handoff.
+- Source version code 10, version 0.10.0. The publishing agent must check the highest Play version code and use the existing application ID/signing identity.
+
+See [ULTRA-UPDATE.md](docs/ULTRA-UPDATE.md). No Play upload or production signing is performed by this source update.
+
 ## 0.9.0 — release candidate
 
 - Keep Parakeet as the default; use personal terms during recognition in Accurate mode, with the original decoder when no terms are saved or Fast is selected.

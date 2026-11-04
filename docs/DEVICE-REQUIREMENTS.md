@@ -4,7 +4,7 @@ The APK installation minimum is Android 8 / API 26 and ARM64. This does not esta
 
 | Configuration | Recommended advertised RAM | Free storage before download |
 | --- | --- | --- |
-| Parakeet or experimental Nemotron + Smart cleanup | 8 GB | 1.5 GB |
+| Parakeet Ultra, original Parakeet or experimental Nemotron + Smart cleanup | 8 GB | 1.5 GB |
 | One speech model + Qwen3 writing | 12 GB | 3 GB |
 
 For Piper readback alone, start with 4 GB RAM and 150 MB free storage. This is a practical recommendation, not a certified minimum.

@@ -2,6 +2,8 @@ import {readFile,readdir,stat} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const root=new URL('../store/',import.meta.url),listing=JSON.parse(await readFile(new URL('listing.json',root),'utf8'));
 assert.ok(listing.googlePlay.title.length<=30);assert.ok(listing.googlePlay.shortDescription.length<=80);assert.ok(listing.googlePlay.fullDescription.length<=4000);
+assert.ok(listing.googlePlay.releaseNotes.length>0&&listing.googlePlay.releaseNotes.length<=500);
+for(const [file,key] of [['title','title'],['short_description','shortDescription'],['full_description','fullDescription'],['release_notes','releaseNotes']])assert.equal((await readFile(new URL('google-play/metadata/en-GB/'+file+'.txt',root),'utf8')).trim(),listing.googlePlay[key]);
 assert.ok(listing.appleDraft.name.length<=30);assert.ok(listing.appleDraft.subtitle.length<=30);assert.ok(listing.appleDraft.keywords.length<=100);assert.ok(listing.appleDraft.promotionalText.length<=170);
 assert.equal(listing.supportEmail,'info@zyralabs.xyz');assert.equal(listing.developerName,'Zyralabs');
 const png=async(file,width,height,opaque=false)=>{const bytes=await readFile(new URL(file,root));assert.equal(bytes.subarray(1,4).toString(),'PNG');assert.equal(bytes.readUInt32BE(16),width,file);assert.equal(bytes.readUInt32BE(20),height,file);if(opaque)assert.equal(bytes[25],2,'Opaque RGB required: '+file);assert.ok(bytes.length<8*1024*1024,file+' is too large');};

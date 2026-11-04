@@ -5,7 +5,7 @@ Murmur turns your voice into messages, notes and emails using your existing keyb
 A small floating control appears when you focus a supported text field. Tap to speak, finish when you are ready, and Murmur inserts your words. Clipboard fallback keeps the result available when insertion is unavailable.
 
 MAKE YOUR WORDS YOUR OWN
-• Parakeet speech recognition with punctuation and capitalisation.
+• Parakeet Ultra and original Parakeet offline recognition with punctuation and capitalisation.
 • Accurate recognition uses a wider word search when you have personal dictionary terms. Without saved terms, or in Fast mode, it retains the original decoder.
 • British English spelling, personal words and short phrase corrections.
 • Lightweight Smart cleanup, spoken punctuation and numbered lists.

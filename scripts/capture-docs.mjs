@@ -32,10 +32,10 @@ try {
   const context = await browser.newContext({ viewport: { width: 430, height: 932 }, deviceScaleFactor: 2, reducedMotion: 'reduce', locale: 'en-GB' });
   await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
   await context.addInitScript(() => {
-    const demo = window.murmurDemo = { cached: JSON.parse(localStorage.getItem('murmur-demo-cache') || '["parakeet-v3"]'), files: {}, jobs: {}, recording: false, clip: '', sequence: 0 };
+    const demo = window.murmurDemo = { cached: JSON.parse(localStorage.getItem('murmur-demo-cache') || '["parakeet-ultra"]'), files: {}, jobs: {}, recording: false, clip: '', sequence: 0 };
     const job = value => { const id = `demo-${++demo.sequence}`; demo.jobs[id] = value; return id; };
     window.MurmurAndroid = {
-      getLaunchContext: () => JSON.stringify({ version: '0.9.0-test' }),
+      getLaunchContext: () => JSON.stringify({ version: '0.10.0-test' }),
       deviceInfo: () => JSON.stringify({ model: 'Android demo device', androidVersion: '16', sdk: 36, ramBytes: 12 * 2 ** 30, freeStorageBytes: 32e9, arm64: true, soc: 'Demo ARM64' }),
       accessibilityEnabled: () => true, configureOverlay: () => {}, configureOverlayAppearance: () => {}, overlayStatus: () => JSON.stringify({ pausedUntil: 0 }), resumeOverlay: () => {},
       backgroundBusy: () => false, pauseBackgroundEngine: () => {}, resumeBackgroundEngine: () => {},
@@ -45,7 +45,7 @@ try {
         if (cacheOnly && !demo.cached.includes(model)) return job({ state: 'error', error: 'Model not downloaded.' });
         if (!demo.cached.includes(model)) demo.cached.push(model);
         localStorage.setItem('murmur-demo-cache', JSON.stringify(demo.cached));
-        return job({ state: 'done', loaded: 670478772, total: 670478772 });
+        return job({ state: 'done', loaded: 670576838, total: 670576838 });
       },
       nativeSpeechStatus: id => JSON.stringify(demo.jobs[id] || { state: 'running' }),
       cancelNativeSpeech: id => { demo.jobs[id] = { state: 'error', error: 'Cancelled' }; },
@@ -77,7 +77,7 @@ try {
     request.onsuccess = () => {
       const database = request.result;
       const transaction = database.transaction(['settings', 'history', 'words', 'snippets'], 'readwrite');
-      transaction.objectStore('settings').put({ id: 'preferences', value: { provider: 'local', localModel: 'parakeet-v3', onboardingComplete: true, editingProvider: 'basic', editingModel: 'qwen3-native', autoCopy: true, overlayOpacity: 1 } });
+      transaction.objectStore('settings').put({ id: 'preferences', value: { provider: 'local', localModel: 'parakeet-ultra', onboardingComplete: true, editingProvider: 'basic', editingModel: 'qwen3-native', autoCopy: true, overlayOpacity: 1 } });
       const now = Date.now();
       const rows = [
         { id: 'demo-note', text: 'Three ideas for the weekend:\n1. Visit the farmers market.\n2. Take a walk by the river.\n3. Make time for a good book.', duration: 24, starred: true },

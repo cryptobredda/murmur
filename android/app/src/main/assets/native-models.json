@@ -1,4 +1,42 @@
 {
+  "parakeet-ultra": {
+    "engine": "parakeet",
+    "files": [
+      {
+        "name": "decoder.int8.onnx",
+        "size": 11845275,
+        "checksum_type": "sha256",
+        "checksum": "94373c6405c8149d1c9d1e9862514e0e3e88dab1c7de18fac9d5df9c6ba5efdd",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/decoder.int8.onnx"
+      },
+      {
+        "name": "encoder.int8.onnx",
+        "size": 652282347,
+        "checksum_type": "sha256",
+        "checksum": "f4d06712d32431b1718eceba2153c314ac4425e8fe708a3534f5e56c5ad53697",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/encoder.int8.onnx"
+      },
+      {
+        "name": "joiner.int8.onnx",
+        "size": 6355277,
+        "checksum_type": "sha256",
+        "checksum": "8a71aaccfdba3d451775507a889afd2257d2e754463fd81095a8c8f290f924c2",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/joiner.int8.onnx"
+      },
+      {
+        "name": "tokens.txt",
+        "size": 93939,
+        "checksum_type": "sha256",
+        "checksum": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/tokens.txt"
+      }
+    ],
+    "license": "CC-BY-4.0",
+    "source": "https://huggingface.co/moondream/parakeet-ultra",
+    "source_revision": "73175eb7aeb0d82f1e2a6b53b3aabc10a90bcd0b",
+    "conversion": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8",
+    "conversion_revision": "b86784a3a5356cbd126f710b61cd90c5fe5898f1"
+  },
   "parakeet-v3": {
     "engine": "parakeet",
     "files": [

@@ -13,7 +13,7 @@ public class DictationBridge {
     protected final Context context;
     DictationBridge(Context context){this.context=context;}
     @JavascriptInterface public void configureSpeech(String provider,String model) {
-        context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("provider",provider).putString("model",NativeSpeech.isSpeechModel(model)?model:"parakeet-v3").apply();
+        context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("provider",provider).putString("model",NativeSpeech.isSpeechModel(model)?model:SpeechModels.DEFAULT).apply();
     }
     @JavascriptInterface public void configureSpeechLanguage(String language){context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE).edit().putString("language",language==null?"auto":language).apply();}
     @JavascriptInterface public void configureRecognition(String mode,String hints){

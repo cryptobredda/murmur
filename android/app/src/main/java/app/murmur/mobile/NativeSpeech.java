@@ -88,7 +88,7 @@ final class NativeSpeech {
             if(!"https".equals(url.getProtocol())||!"huggingface.co".equals(url.getHost()))throw new IOException("Invalid model source.");
             if(offset<size) {
                 HttpURLConnection connection=(HttpURLConnection)url.openConnection();connection.setConnectTimeout(30000);connection.setReadTimeout(30000);
-                connection.setRequestProperty("Accept-Encoding","identity");connection.setRequestProperty("User-Agent","Murmur/0.8 (Android)");if(offset>0)connection.setRequestProperty("Range","bytes="+offset+"-");
+                connection.setRequestProperty("Accept-Encoding","identity");connection.setRequestProperty("User-Agent","Murmur/"+BuildConfig.VERSION_NAME+" (Android)");if(offset>0)connection.setRequestProperty("Range","bytes="+offset+"-");
                 try {
                     int code=connection.getResponseCode();
                     if(code!=200&&code!=206)throw new IOException("Model server returned "+code+". Tap Download to resume.");
@@ -112,11 +112,11 @@ final class NativeSpeech {
         if(!isSpeechModel(model))throw new IOException("Choose a speech recognition model.");
         if(!present(model))throw new IOException("Download this speech model inside Murmur first.");
         releaseRecognizer();
-        if(model.equals("parakeet-v3"))parakeet=new ParakeetRecognizer(context,directory(model),options);
+        if(SpeechModels.isParakeet(model))parakeet=new ParakeetRecognizer(context,directory(model),options);
         else nemotron=new NemotronRecognizer(directory(model));
         loaded=model;loadedOptions=options.signature();
     }
-    static boolean isSpeechModel(String model){return "parakeet-v3".equals(model)||"nemotron-multilingual".equals(model)||"nemotron-en".equals(model);}
+    static boolean isSpeechModel(String model){return SpeechModels.isSupported(model);}
     private void releaseRecognizer(){
         if(parakeet!=null){parakeet.close();parakeet=null;}
         if(nemotron!=null){nemotron.close();nemotron=null;}
@@ -147,7 +147,7 @@ final class NativeSpeech {
     }
     void beginCapture(String audioId) {
         android.content.SharedPreferences prefs=context.getSharedPreferences("murmur_native_speech",Context.MODE_PRIVATE);
-        String model=prefs.getString("model","parakeet-v3");
+        String model=prefs.getString("model",SpeechModels.DEFAULT);
         if(prefs.getString("provider","").equals("local")&&isSpeechModel(model)&&present(model))submit(audioId,model,language());
     }
     private Job submit(String audioId,String model,String language) {

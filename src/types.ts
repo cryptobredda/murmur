@@ -1,7 +1,7 @@
 export type View = "dictate" | "history" | "dictionary" | "models" | "settings";
 export type Provider = "local" | "openai" | "groq" | "custom";
 export type Style = "natural" | "polished" | "verbatim";
-export type LocalModel = "parakeet-v3" | "nemotron-multilingual" | "nemotron-en";
+export type LocalModel = "parakeet-ultra" | "parakeet-v3" | "nemotron-multilingual" | "nemotron-en";
 export type VoiceModel = "none" | "piper-alba";
 export type EditingModel = "qwen3-native";
 export type EditingProvider = "basic" | "local" | "openai" | "groq" | "custom";
@@ -85,7 +85,7 @@ export interface Settings {
 }
 export const defaults: Settings = {
   provider: "local",
-  localModel: "parakeet-v3",
+  localModel: "parakeet-ultra",
   voiceModel: "none",
   language: "auto",
   recognitionMode: "accurate",
@@ -160,9 +160,13 @@ export const defaults: Settings = {
   ],
 };
 export const models = {
+  "parakeet-ultra": {
+    name: "Parakeet Ultra", repo: "parakeet-ultra", engine: "native", languages: "25 European languages",
+    size: "671 MB", description: "Moondream's further-trained Parakeet, converted to INT8 for offline recognition on your phone. Uses your personal vocabulary in Accurate mode.", label: "Recommended",
+  },
   "parakeet-v3": {
     name: "Parakeet TDT v3", repo: "parakeet-v3", engine: "native", languages: "25 European languages",
-    size: "670 MB", description: "600M-parameter native recognition with punctuation and capitalization. Runs offline on your phone after download.", label: "Local speech",
+    size: "670 MB", description: "The original Parakeet model. Keep using your existing download, or compare it with Ultra on the same saved recording.", label: "Original",
   },
   "nemotron-multilingual": {
     name: "Nemotron 3.5 Streaming", repo: "nemotron-multilingual", engine: "native", languages: "28 languages · 32 supported locales",
@@ -177,7 +181,7 @@ export function speechModelOptions() { return Object.keys(models) as LocalModel[
 export function supportsSpeechLanguage(model: LocalModel, language: string) {
   if(language === "auto") return true;
   if(model === "nemotron-en") return language === "en";
-  if(model === "parakeet-v3" && language === "en-GB")return true;
+  if((model === "parakeet-v3" || model === "parakeet-ultra") && language === "en-GB")return true;
   if(model === "nemotron-multilingual" && ["en-GB","es-US","fr-CA","pt-PT"].includes(language))return true;
   const codes = model === "nemotron-multilingual"
     ? "en es fr it pt nl de tr ru ar hi ja ko vi uk pl sv cs no da bg fi hr sk zh hu ro et"
@@ -186,14 +190,14 @@ export function supportsSpeechLanguage(model: LocalModel, language: string) {
 }
 // Normalize preferences from upgrades, imports and sync without resetting setup or cloud configuration.
 export function normalizeSettings(saved?: Partial<Settings>): Settings {
-  const localModel = saved?.localModel && speechModelOptions().includes(saved.localModel) ? saved.localModel : "parakeet-v3";
+  const localModel = saved?.localModel && speechModelOptions().includes(saved.localModel) ? saved.localModel : defaults.localModel;
   const result: Settings = { ...defaults, ...saved, localModel, editingModel: "qwen3-native", voiceModel: saved?.voiceModel === "piper-alba" ? "piper-alba" : "none" };
   result.recognitionMode=saved?.recognitionMode==="fast"?"fast":"accurate";
   result.englishVariant=saved?.englishVariant==="en-US"?"en-US":"en-GB";
   if (result.provider === "local" && !supportsSpeechLanguage(result.localModel, result.language)) result.language = "auto";
   return result;
 }
-export function languageOptions(provider: Provider, model: LocalModel = "parakeet-v3") {
+export function languageOptions(provider: Provider, model: LocalModel = defaults.localModel) {
   return languages.filter(([code]) => provider !== "local" ? !code.includes("-") : supportsSpeechLanguage(model, code));
 }
 export const languages = [
