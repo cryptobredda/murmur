@@ -28,3 +28,18 @@ test('download catalog pins every file, including the English phonemizer data',a
   assert.ok(voice.some(file=>file.name==='espeak-ng-data/lang/gmw/en-GB-x-rp'));
   assert.ok(voice.reduce((sum,file)=>sum+file.size,0)<65000000);
 });
+test('Ultra uses a separate pinned Parakeet bundle with a shared tokenizer and its own weights',async()=>{
+  const catalog=JSON.parse(await readFile(new URL('../android/app/src/main/assets/native-models.json',import.meta.url),'utf8'));
+  const ultra=catalog['parakeet-ultra'],original=catalog['parakeet-v3'];
+  assert.equal(ultra.engine,'parakeet');assert.equal(ultra.license,'CC-BY-4.0');
+  assert.equal(ultra.source,'https://huggingface.co/moondream/parakeet-ultra');
+  assert.equal(ultra.conversion_revision,'b86784a3a5356cbd126f710b61cd90c5fe5898f1');
+  assert.deepEqual(ultra.files.map(file=>file.name),original.files.map(file=>file.name));
+  assert.equal(ultra.files.reduce((sum,file)=>sum+file.size,0),670576838);
+  for(const file of ultra.files){
+    const prior=original.files.find(other=>other.name===file.name);
+    if(file.name==='tokens.txt')assert.equal(file.checksum,prior.checksum);
+    else assert.notEqual(file.checksum,prior.checksum);
+    assert.ok(file.url.includes('/'+ultra.conversion_revision+'/'));
+  }
+});

@@ -9,7 +9,7 @@
 An open-source Android speech-to-text app with a floating dictation button, local AI, saved recordings, and optional writing assistance. Turn thoughts into messages, notes, and emails using your existing keyboard.
 
 [![Android](https://img.shields.io/badge/Android-8%2B-286557?logo=android&logoColor=white)](#device-requirements)
-[![Local speech](https://img.shields.io/badge/Speech-Parakeet_TDT_v3-286557)](#local-models)
+[![Local speech](https://img.shields.io/badge/Speech-Parakeet_Ultra-286557)](#local-models)
 [![Offline](https://img.shields.io/badge/Works-offline-286557)](#privacy)
 [![License](https://img.shields.io/badge/App_license-MIT-c78263)](LICENSE)
 
@@ -23,7 +23,7 @@ Murmur is a free, independent alternative to subscription voice typing tools suc
 
 **No Murmur account. No subscription. No local word quota.** Local dictation works offline after the models download. Optional cloud providers use your credentials and may charge for usage.
 
-**Status:** Android release candidate, `0.9.0-test`, by **Zyralabs**. Parakeet remains the default. [Build from source](docs/BUILDING.md) or review the [Play Store pack](store/README.md), including listing pictures and signing instructions. [Validation and remaining release steps](docs/REVIEW-0.9.md). Prebuilt APKs will appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. The iOS app is deferred; iOS brand/copy drafts are included.
+**Status:** Android tester update, `0.10.0`, by **Zyralabs**. Parakeet Ultra is recommended for new installations. Existing users keep their chosen model until they download and use another. [Ultra changes and publishing handoff](docs/ULTRA-UPDATE.md) · [Build from source](docs/BUILDING.md) · [Play Store pack](store/README.md). Prebuilt APKs appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. The iOS app remains deferred.
 
 ## Take a look
 
@@ -85,7 +85,7 @@ App screens use the bundled UI with fictional data and a simulated Android bridg
 ## Get started
 
 1. Install a maintainer-published [release APK](https://github.com/cryptobredda/murmur/releases), or [build one](docs/BUILDING.md).
-2. Follow onboarding and **download a speech model inside Murmur** (Parakeet is the default). Downloads verify pinned SHA-256 checksums and support cancellation/resume.
+2. Follow onboarding and **download a speech model inside Murmur** (Parakeet Ultra is recommended for new installations). Existing users can choose **Models → Parakeet Ultra → Download and use**. Selection switches after verification/loading succeeds. Downloads verify pinned SHA-256 checksums and support cancellation/resume.
 3. Keep Smart cleanup for the lightest setup, or download optional Qwen3 writing inside the app. Cloud is optional.
 4. Grant microphone access and enable Murmur's accessibility service for cross-app dictation/insertion.
 5. Open a supported field, tap the logo, speak, and tap the waveform to finish. Cancel is available while listening or processing.
@@ -96,7 +96,8 @@ All model setup happens in the app. No manual model-file downloads or transfers.
 
 | Purpose | Model | Runtime | Download |
 | --- | --- | --- | --- |
-| Speech-to-text | NVIDIA Parakeet TDT 0.6B v3, INT8 | Sherpa-ONNX, CPU | Approximately 670 MB |
+| Recommended speech-to-text | Moondream Parakeet Ultra, INT8 | Sherpa-ONNX, CPU | Approximately 671 MB |
+| Original speech-to-text | NVIDIA Parakeet TDT 0.6B v3, INT8 | Sherpa-ONNX, CPU | Approximately 670 MB |
 | Experimental multilingual speech | Nemotron 3.5 ASR Streaming 0.6B, Q8 | NeMo-Speech.cpp, CPU | Approximately 742 MB |
 | Experimental English speech | Nemotron Speech Streaming English 0.6B, Q8 | NeMo-Speech.cpp, CPU | Approximately 700 MB |
 | Optional offline readback | Piper Alba medium, British English | Sherpa-ONNX VITS, CPU | Approximately 64 MB |
@@ -105,7 +106,7 @@ All model setup happens in the app. No manual model-file downloads or transfers.
 
 Parakeet provides punctuation/capitalization and supports **25 European languages**: Bulgarian, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French, German, Greek, Hungarian, Italian, Latvian, Lithuanian, Maltese, Polish, Portuguese, Romanian, Russian, Slovak, Slovenian, Spanish, Swedish, and Ukrainian.
 
-Parakeet remains the default. Nemotron adds experimental streaming recognition, with 32 ready locale prompts across 28 languages in the multilingual variant. Compare downloaded models against the same saved recording inside the app; optional exact reference text adds word-error measurement. Piper provides manual English readback in History. [Mobile suitability, measurements and testing →](docs/MOBILE-MODELS.md) [Sources, pinned revisions, and licences →](MODEL-NOTICES.md)
+Ultra and the original Parakeet use separate downloads, so existing users can keep their working model and compare the same saved recording. Ultra uses further-trained weights; its publisher's full-precision GPU results do not establish Android INT8 speed or British-accent accuracy. Nemotron remains experimental. The in-app comparison accepts optional exact reference text for word-error measurement. Piper provides manual English readback in History. [Ultra update and validation →](docs/ULTRA-UPDATE.md) [Earlier model trials →](docs/MOBILE-MODELS.md) [Sources, pinned revisions, and licences →](MODEL-NOTICES.md)
 
 ## Device requirements
 

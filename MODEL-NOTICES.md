@@ -2,6 +2,16 @@
 
 Murmur offers separately downloaded models. This APK bundles inference runtimes, not the model weights. Murmur modifies the execution and editing pipeline; it is not endorsed by the model publishers.
 
+## Moondream Parakeet Ultra, INT8 ONNX
+
+Creator of the further-trained model: Moondream, based on NVIDIA Parakeet TDT 0.6B v3. Source: https://huggingface.co/moondream/parakeet-ultra at revision `73175eb7aeb0d82f1e2a6b53b3aabc10a90bcd0b`.
+
+Model licence: Creative Commons Attribution 4.0 International, https://creativecommons.org/licenses/by/4.0/ . Attribution to Moondream and NVIDIA is retained. This model is separate from the original v3 download; existing downloaded models are not overwritten or deleted during upgrade.
+
+The in-app download uses tpmaerk's Sherpa-ONNX INT8 conversion: https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8 at revision `b86784a3a5356cbd126f710b61cd90c5fe5898f1`, also CC BY 4.0. The converter maps the source checkpoint back to NeMo tensor names, casts source F16 tensors to F32 for export, omits Ultra's six extra `vad_head.*` tensors and applies dynamic INT8 quantization. The tokenizer matches the pinned original v3 tokenizer. Murmur uses its own existing audio segmentation; Photon's built-in VAD and GPU speed claims do not apply to this integration. Murmur does not further train these weights.
+
+The four-file bundle is **670,576,838 bytes**. Each file's exact size, immutable URL and SHA-256 checksum are pinned in `android/app/src/main/assets/native-models.json`; downloads verify all four before marking the model ready. The CPU inference runtime remains Sherpa-ONNX 1.13.8. The shared attributed BPE vocabulary described below supports personal terms in both Parakeet models.
+
 ## NVIDIA Parakeet TDT 0.6B v3
 
 Creator: NVIDIA. Source: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3

@@ -3,7 +3,7 @@ import { androidDevice, type AndroidDevice } from "./native";
 import { assessDevice } from "./device";
 import type { LocalModel } from "./types";
 
-export function DeviceGuidance({ withWriting = false,model="parakeet-v3" }: { withWriting?: boolean;model?:LocalModel }) {
+export function DeviceGuidance({ withWriting = false,model="parakeet-ultra" }: { withWriting?: boolean;model?:LocalModel }) {
   const [device, setDevice] = useState<AndroidDevice | null>(androidDevice);
   useEffect(() => {
     const refresh = () => setDevice(androidDevice());
@@ -34,12 +34,12 @@ export function DeviceGuidance({ withWriting = false,model="parakeet-v3" }: { wi
           Phones from the past five years can install this APK if they meet those Android and ARM requirements, but their age alone does not establish model speed or enough RAM. Try a saved recording before choosing a model.
         </p>
         <p>
-          <a href={model==="nemotron-multilingual"?"https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b":model==="nemotron-en"?"https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b":"https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"} target="_blank" rel="noreferrer">Selected speech model card</a>{" · "}
+          <a href={model==="parakeet-ultra"?"https://huggingface.co/moondream/parakeet-ultra":model==="nemotron-multilingual"?"https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b":model==="nemotron-en"?"https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b":"https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3"} target="_blank" rel="noreferrer">Selected speech model card</a>{" · "}
           <a href="https://k2-fsa.github.io/sherpa/onnx/android/apk.html" target="_blank" rel="noreferrer">Android speech runtime</a>{" · "}
           <a href="https://huggingface.co/litert-community/Qwen3-1.7B/blob/73fbc3fe8271c162a603ee66f6e7ed25b6211195/README.md" target="_blank" rel="noreferrer">Qwen3 Android measurements</a>
         </p>
         <p>
-          {model==="parakeet-v3"?"Parakeet's publisher quotes 2 GB to load the original Linux model, which is not a 2 GB Android phone minimum.":"Nemotron's publisher has not established a minimum Android phone specification. These experimental Q8 models download 700–742 MB; 8 GB RAM is a conservative starting recommendation pending phone measurements."}
+          {model==="parakeet-ultra"?"Ultra downloads about 671 MB as INT8 ONNX and runs on the same CPU engine as the original Parakeet. Its publisher's GPU benchmarks do not establish Android latency or a British-accent accuracy guarantee. Keeping both Parakeet models needs about 671 MB of extra storage.":model==="parakeet-v3"?"Parakeet's publisher quotes 2 GB to load the original Linux model, which is not a 2 GB Android phone minimum.":"Nemotron's publisher has not established a minimum Android phone specification. These experimental Q8 models download 700–742 MB; 8 GB RAM is a conservative starting recommendation pending phone measurements."}
           Qwen3's community Android measurements are from a Galaxy S26 and do not establish a universal phone requirement.
         </p>
       </details>

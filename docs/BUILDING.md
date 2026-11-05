@@ -26,7 +26,7 @@ On Windows, use `gradlew.bat`. Gradle 8.11.1 is pinned with a distribution check
 
 SDK command-line package names: `platforms;android-36`, `build-tools;36.0.0`, `ndk;28.2.13676358`, `cmake;3.31.6`.
 
-Output: `android/app/build/outputs/apk/debug/app-debug.apk`. The package is `app.murmur.mobile`, currently version `0.9.0-test` (version code 9, target API 36). It targets ARM64 phones; x86 emulators cannot run its native inference libraries.
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`. The package is `app.murmur.mobile`, currently version `0.10.0-test` (source version code 10, target API 36). The publishing agent must use a version code higher than every existing Play upload; see [ULTRA-UPDATE.md](ULTRA-UPDATE.md). It targets ARM64 phones; x86 emulators cannot run its native inference libraries.
 
 ## Install
 

@@ -9,7 +9,7 @@ const store=path.join(root,'store'),listing=JSON.parse(await readFile(path.join(
 const play=path.join(store,'google-play/metadata/en-GB'),apple=path.join(store,'apple/drafts/en-GB');
 await mkdir(path.join(play,'images/phoneScreenshots'),{recursive:true});await mkdir(apple,{recursive:true});
 for(const [file,key] of [['title','title'],['short_description','shortDescription'],['full_description','fullDescription']])await writeFile(path.join(play,file+'.txt'),listing.googlePlay[key]+'\n');
-await writeFile(path.join(play,'release_notes.txt'),'0.9.0: Accurate word search with personal vocabulary, British English spelling, short phrase corrections and reliable background learning. Saved recordings remain reusable. Updated Android API 36 release configuration.\n');
+await writeFile(path.join(play,'release_notes.txt'),listing.googlePlay.releaseNotes+'\n');
 await writeFile(path.join(play,'contact-email.txt'),listing.supportEmail+'\n');await writeFile(path.join(play,'privacy-policy-url.txt'),listing.privacyPolicyUrl+'\n');
 for(const [file,key] of [['name','name'],['subtitle','subtitle'],['promotional_text','promotionalText'],['keywords','keywords'],['description','description']])await writeFile(path.join(apple,file+'.txt'),listing.appleDraft[key]+'\n');
 const capture=spawnSync(process.execPath,['scripts/capture-docs.mjs'],{cwd:root,env:{...process.env,MURMUR_CAPTURE_DIR:path.join(store,'source-screens')},stdio:'inherit'});

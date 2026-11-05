@@ -3,7 +3,7 @@ android {
     namespace 'app.murmur.mobile'
     compileSdk 36
     defaultConfig {
-        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 36; versionCode 9; versionName '0.9.0'
+        applicationId 'app.murmur.mobile'; minSdk 26; targetSdk 36; versionCode 10; versionName '0.10.0'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         ndk { abiFilters 'arm64-v8a' }
     }

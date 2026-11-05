@@ -11,10 +11,11 @@ async function moduleFromTypescript(path) {
 const models = await moduleFromTypescript('../src/types.ts');
 const { assessDevice } = await moduleFromTypescript('../src/device.ts');
 
-test('the catalog keeps Parakeet as default and adds experimental native Nemotron', () => {
-  assert.deepEqual(models.speechModelOptions(), ['parakeet-v3', 'nemotron-multilingual', 'nemotron-en']);
+test('new installations recommend Ultra and retain the original and experimental options', () => {
+  assert.deepEqual(models.speechModelOptions(), ['parakeet-ultra', 'parakeet-v3', 'nemotron-multilingual', 'nemotron-en']);
   assert.deepEqual(models.editingModelOptions(), ['qwen3-native']);
-  assert.equal(models.defaults.localModel, 'parakeet-v3');
+  assert.equal(models.defaults.localModel, 'parakeet-ultra');
+  assert.equal(models.normalizeSettings().localModel, 'parakeet-ultra');
   assert.equal(models.defaults.editingProvider, 'basic');
   assert.equal(models.defaults.voiceModel, 'none');
 });
@@ -44,7 +45,7 @@ test('upgrading retired models preserves setup, cloud options and personal prefe
         provider: 'custom', language: 'ar', cloudEndpoint: 'https://speech.example/v1', cloudModel: 'my-model',
         editingProvider: 'local', rememberKey: true, preferencesUpdatedAt: 123, profiles: [{ id: 'custom', name: 'My style' }] };
       const upgraded = models.normalizeSettings(saved);
-      assert.equal(upgraded.localModel, 'parakeet-v3');
+      assert.equal(upgraded.localModel, 'parakeet-ultra');
       assert.equal(upgraded.editingModel, 'qwen3-native');
       for (const key of ['onboardingComplete', 'overlayOpacity', 'provider', 'language', 'cloudEndpoint', 'cloudModel', 'editingProvider', 'rememberKey', 'preferencesUpdatedAt', 'profiles']) {
         assert.deepEqual(upgraded[key], saved[key]);
@@ -62,6 +63,14 @@ test('local language choices match Parakeet and old unsupported choices become a
   assert.ok(models.languageOptions('custom').some(([code]) => code === 'ar'));
   assert.equal(models.normalizeSettings({ language: 'ar' }).language, 'auto');
   assert.equal(models.normalizeSettings({ language: 'fr' }).language, 'fr');
+  assert.deepEqual(models.languageOptions('local','parakeet-ultra'),models.languageOptions('local','parakeet-v3'));
+  for(const localModel of ['parakeet-ultra','parakeet-v3'])assert.equal(models.normalizeSettings({localModel,language:'en-GB'}).language,'en-GB');
+});
+test('a configured tester keeps the selected model, cloud choices and personal settings on upgrade',()=>{
+  const saved={...models.defaults,localModel:'parakeet-v3',provider:'local',language:'en-GB',onboardingComplete:true,overlayOpacity:.42,editingProvider:'local',autoLearn:false,recognitionMode:'fast',cloudEndpoint:'https://speech.example/v1',rememberKey:true};
+  assert.deepEqual(models.normalizeSettings(saved),saved);
+  const switched=models.normalizeSettings({...saved,localModel:'parakeet-ultra'});
+  assert.deepEqual(switched,{...saved,localModel:'parakeet-ultra'});
 });
 test('hardware recommendations do not block compatible phones and account for reserved memory', () => {
   const GiB = 2 ** 30;
