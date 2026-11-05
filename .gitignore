@@ -29,6 +29,11 @@ android/app/src/main/assets/www/
 *.wav
 *.m4a
 *.mp3
+*.gguf
+*.onnx
+*.nemo
+*.safetensors
+*.litertlm
 *.properties.local
 android/keystore.properties
 keystore.properties

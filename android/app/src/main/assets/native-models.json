@@ -1,4 +1,42 @@
 {
+  "parakeet-ultra": {
+    "engine": "parakeet",
+    "files": [
+      {
+        "name": "decoder.int8.onnx",
+        "size": 11845275,
+        "checksum_type": "sha256",
+        "checksum": "94373c6405c8149d1c9d1e9862514e0e3e88dab1c7de18fac9d5df9c6ba5efdd",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/decoder.int8.onnx"
+      },
+      {
+        "name": "encoder.int8.onnx",
+        "size": 652282347,
+        "checksum_type": "sha256",
+        "checksum": "f4d06712d32431b1718eceba2153c314ac4425e8fe708a3534f5e56c5ad53697",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/encoder.int8.onnx"
+      },
+      {
+        "name": "joiner.int8.onnx",
+        "size": 6355277,
+        "checksum_type": "sha256",
+        "checksum": "8a71aaccfdba3d451775507a889afd2257d2e754463fd81095a8c8f290f924c2",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/joiner.int8.onnx"
+      },
+      {
+        "name": "tokens.txt",
+        "size": 93939,
+        "checksum_type": "sha256",
+        "checksum": "d58544679ea4bc6ac563d1f545eb7d474bd6cfa467f0a6e2c1dc1c7d37e3c35d",
+        "url": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8/resolve/b86784a3a5356cbd126f710b61cd90c5fe5898f1/tokens.txt"
+      }
+    ],
+    "license": "CC-BY-4.0",
+    "source": "https://huggingface.co/moondream/parakeet-ultra",
+    "source_revision": "73175eb7aeb0d82f1e2a6b53b3aabc10a90bcd0b",
+    "conversion": "https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8",
+    "conversion_revision": "b86784a3a5356cbd126f710b61cd90c5fe5898f1"
+  },
   "parakeet-v3": {
     "engine": "parakeet",
     "files": [
@@ -47,5 +85,117 @@
     ],
     "license": "Apache-2.0",
     "source": "https://huggingface.co/Qwen/Qwen3-1.7B"
+  },
+  "nemotron-multilingual": {
+    "engine": "nemotron",
+    "files": [
+      {
+        "name": "model.gguf",
+        "size": 742090464,
+        "checksum_type": "sha256",
+        "checksum": "3fc991d3badad7277c11030a7519832cddaf2057aafed6d4b25147e953a070b1",
+        "url": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b/resolve/ea30d66debe3740a08b573244286791d423d6b3e/nemotron-3.5-asr-streaming-0.6b.q8_0.gguf"
+      }
+    ],
+    "license": "OpenMDW-1.1",
+    "source": "https://huggingface.co/nvidia/nemotron-3.5-asr-streaming-0.6b"
+  },
+  "nemotron-en": {
+    "engine": "nemotron",
+    "files": [
+      {
+        "name": "model.gguf",
+        "size": 699872960,
+        "checksum_type": "sha256",
+        "checksum": "d9a01898d2a611c8764e23a1c2f45e70bbd5a425dc4de93692ac951dd603812d",
+        "url": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b/resolve/ebe59e5a817142986528bbbee5dba8db7b38ed50/nemotron-speech-streaming-en-0.6b.q8_0.gguf"
+      }
+    ],
+    "license": "NVIDIA-Open-Model-License",
+    "source": "https://huggingface.co/nvidia/nemotron-speech-streaming-en-0.6b"
+  },
+  "piper-alba": {
+    "engine": "tts",
+    "files": [
+      {
+        "name": "en_GB-alba-medium.onnx",
+        "size": 63201430,
+        "checksum_type": "sha256",
+        "checksum": "c904d007a8047ab13628b021351b983d0a2627c0d7a81c64a6fe9ad661adb1cf",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/en_GB-alba-medium.onnx"
+      },
+      {
+        "name": "MODEL_CARD",
+        "size": 324,
+        "checksum_type": "sha256",
+        "checksum": "fa166b1779404c470b0b6b4ba0238bc4a35bf89d2cd130c6788f697188b737d6",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/MODEL_CARD"
+      },
+      {
+        "name": "en_GB-alba-medium.onnx.json",
+        "size": 4888,
+        "checksum_type": "sha256",
+        "checksum": "aa965a2f02ecced632c2694e1fc72bbff6d65f265fab567ca945918c73dd89f4",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/en_GB-alba-medium.onnx.json"
+      },
+      {
+        "name": "tokens.txt",
+        "size": 921,
+        "checksum_type": "sha256",
+        "checksum": "87c8ef66eae5473ed0cc0366b3964c736ca6c5f676c979522ea31234e47430b9",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/tokens.txt"
+      },
+      {
+        "name": "espeak-ng-data/phondata",
+        "size": 550424,
+        "checksum_type": "sha256",
+        "checksum": "4e0288957874029a8c3c9f41a8f517ad4bf18127046decbdd4b9d1d6807ce3a3",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/phondata"
+      },
+      {
+        "name": "espeak-ng-data/phontab",
+        "size": 55796,
+        "checksum_type": "sha256",
+        "checksum": "886f3fa402cb0ba73d483aa8ad000af47a6b7cc06293c75a97913fba68a530f6",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/phontab"
+      },
+      {
+        "name": "espeak-ng-data/phonindex",
+        "size": 39074,
+        "checksum_type": "sha256",
+        "checksum": "3ca7b8fa3b42624e4b0f152707e7a39245fce569aa99ea47c055d9e622fcf0c4",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/phonindex"
+      },
+      {
+        "name": "espeak-ng-data/intonations",
+        "size": 2040,
+        "checksum_type": "sha256",
+        "checksum": "3f8af65fd3eda9759a10f021d61361c120871f463515229c925995c7f90918cc",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/intonations"
+      },
+      {
+        "name": "espeak-ng-data/en_dict",
+        "size": 166944,
+        "checksum_type": "sha256",
+        "checksum": "71bd330ba8a2e3e8076e631508208ef49449d6147c17b7bd2b4b1e1468292e35",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/en_dict"
+      },
+      {
+        "name": "espeak-ng-data/lang/gmw/en",
+        "size": 140,
+        "checksum_type": "sha256",
+        "checksum": "4605d5330801de3641c6e366d15f129ea1f5ffbce8722642aba01ace07ab9c83",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/lang/gmw/en"
+      },
+      {
+        "name": "espeak-ng-data/lang/gmw/en-GB-x-rp",
+        "size": 249,
+        "checksum_type": "sha256",
+        "checksum": "d0625af7f58561b1b8cf96fd7f93eee6553bcb3eadb9020ae0757bf96e5115e5",
+        "url": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium/resolve/7e469a54c7a4f5bd191cae788e197266e2c9c5ac/espeak-ng-data/lang/gmw/en-GB-x-rp"
+      }
+    ],
+    "license": "CC-BY-4.0 (voice dataset); GPL-3.0 (eSpeak NG)",
+    "source": "https://huggingface.co/csukuangfj/vits-piper-en_GB-alba-medium"
   }
 }

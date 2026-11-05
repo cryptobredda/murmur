@@ -3,6 +3,12 @@ import org.junit.Test;
 import java.util.*;
 import static org.junit.Assert.*;
 public class SpeechSegmentsTest {
+    @Test public void shortPausesRetainSentenceContextAndFinishFlushesWithoutWaiting() throws Exception {
+        List<float[]> batches=new ArrayList<>();SpeechSegments segments=new SpeechSegments(100,(audio,overlap)->batches.add(audio));
+        float[] speech=new float[100];Arrays.fill(speech,.02f);for(int i=0;i<10;i++)segments.accept(speech);
+        segments.accept(new float[100]);assertTrue(batches.isEmpty());
+        segments.accept(speech);segments.finish();assertEquals(1,batches.size());assertEquals(1200,batches.get(0).length);
+    }
     @Test public void forcedBatchesRetainAllSamplesAndOverlapOnlyTheirBoundary() throws Exception {
         List<float[]> batches=new ArrayList<>();List<Boolean> overlap=new ArrayList<>();
         SpeechSegments segments=new SpeechSegments(100,(audio,shared)->{batches.add(audio);overlap.add(shared);});

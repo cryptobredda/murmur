@@ -7,6 +7,8 @@ Murmur processes local speech and optional local writing on your phone. You choo
 | Action | Information and destination |
 | --- | --- |
 | Local dictation | Microphone audio is saved and processed in private app storage on your phone. |
+| Optional readback | Selected transcript is synthesized and played locally using the downloaded voice; playback is manually started. |
+| Model comparison | Saved audio is processed locally; comparison does not overwrite History. Exported JSON includes recognized/reference text and device information only when you choose to export. |
 | Local writing | Recognized text and applicable writing instructions are processed on your phone. |
 | Model downloads | HTTPS requests go to the model hosts in the pinned manifest. Hosts receive normal connection metadata such as IP address. |
 | Optional cloud speech | Audio and parameters go directly to your chosen speech endpoint using your credentials. |
@@ -22,7 +24,7 @@ Murmur has no account server, advertising, or analytics SDK. Cloud providers and
 - **Accessibility:** identifies editable fields and inserts text. The current app identifier and applicable draft/selection context may be used for writing profiles or commands. Password fields are excluded. Enable this sensitive capability only for builds you trust.
 - **Accessibility overlay:** displays the control through Murmur's enabled accessibility service. Protected windows and some editors may prevent it from appearing.
 - **Foreground microphone service and notification:** Android requires these for active background capture. The notification is quiet and provides active-session controls.
-- **Wakefulness:** capture and processing keep the phone awake until output or cancellation. Focusing a field alone does not.
+- **Wakefulness:** capture and processing keep the phone awake until output or cancellation. The foreground model comparison keeps its screen awake only while running. Focusing a field alone does not.
 - **Internet:** downloads models and optionally contacts configured providers/storage.
 
 ## History, audio, and deletion

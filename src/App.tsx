@@ -89,6 +89,10 @@ import { editWriting, cancelEditing, automaticEditingBudget } from "./writing";
 import { retrySavedAudio } from "./recovery.mjs";
 import { SavedAudio } from "./SavedAudio";
 import { DeviceGuidance } from "./DeviceGuidance";
+import { flushLearnedCorrections } from "./learning.mjs";
+import { ModelTrials } from "./ModelTrials";
+import { VoiceSettings } from "./VoiceSettings";
+import { ReadAloud } from "./ReadAloud";
 
 type Phase = "idle" | "starting" | "recording" | "transcribing" | "editing";
 const navigation = [
@@ -282,6 +286,7 @@ function App() {
   const [draft, setDraft] = useState("");
   const [lastRecord, setLastRecord] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
+  const [auxBusy,setAuxBusy] = useState(false);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const [seconds, setSeconds] = useState(0);
@@ -532,8 +537,11 @@ function App() {
     return () => clearInterval(timer);
   }, [phase]);
   useEffect(() => {
-    if (loaded) native?.configureSpeech?.(settings.provider,settings.localModel);
-  },[loaded,settings.provider,settings.localModel]);
+    if (loaded) {native?.configureSpeech?.(settings.provider,settings.localModel);native?.configureSpeechLanguage?.(settings.language);}
+  },[loaded,settings.provider,settings.localModel,settings.language]);
+  useEffect(()=>{
+    if(loaded)native?.configureRecognition?.(settings.recognitionMode,JSON.stringify(words.map(word=>word.replacement)));
+  },[loaded,settings.recognitionMode,words]);
   useEffect(() => {
     if (phase === "idle" || native || !navigator.wakeLock) return;
     let lock: WakeLockSentinel | undefined,disposed=false;
@@ -622,7 +630,7 @@ function App() {
   },[native]);
   useEffect(() => {
     if (
-      !loaded || !appActive || backgroundBusy ||
+      !loaded || !appActive || backgroundBusy || auxBusy ||
       settings.provider !== "local" ||
       readyModel === settings.localModel ||
       loadingModel ||
@@ -633,7 +641,7 @@ function App() {
     attemptedLoad.current = settings.localModel;
     void prepareModel(settings.localModel);
   }, [
-    loaded, appActive, backgroundBusy,
+    loaded, appActive, backgroundBusy, auxBusy,
     settings.provider,
     settings.localModel,
     cachedModels,
@@ -644,33 +652,8 @@ function App() {
     if (!loaded) return;
     const collect = async () => {
       try {
-        const learned = JSON.parse(native?.takeLearnedWords?.() || "[]");
-        if (!settingsRef.current.autoLearn || !Array.isArray(learned)) return;
-        for (const term of learned) {
-          if (
-            typeof term.spoken !== "string" ||
-            typeof term.replacement !== "string" ||
-            term.spoken.length > 150 ||
-            term.replacement.length > 200
-          )
-            continue;
-          const word: Word = {
-            id:
-              wordsRef.current.find(
-                (x) => x.spoken.toLowerCase() === term.spoken.toLowerCase(),
-              )?.id || id(),
-            spoken: term.spoken,
-            replacement: term.replacement,
-            updatedAt: Date.now(),
-          };
-          await db.put("words", word);
-          setWords((old) => [
-            ...old.filter(
-              (x) => x.spoken.toLowerCase() !== word.spoken.toLowerCase(),
-            ),
-            word,
-          ]);
-        }
+        const learned=await flushLearnedCorrections({native,words:wordsRef.current,put:(word:Word)=>db.put("words",word),enabled:settingsRef.current.autoLearn});
+        for(const word of learned)setWords(old=>[...old.filter(item=>item.spoken.toLowerCase()!==word.spoken.toLowerCase()),word]);
       } catch {}
     };
     void collect();
@@ -745,8 +728,8 @@ function App() {
       say(safeError(e), true);
     }
   }
-  async function prepareModel(model: LocalModel) {
-    if (loadingModel) return;
+  async function prepareModel(model: LocalModel, activateAfterLoad = false) {
+    if (loadingModel || auxBusy) return;
     const generation = ++modelGeneration.current;
     setLoadingModel(model);
     setModelProgress(0);
@@ -762,6 +745,9 @@ function App() {
           setModelFile("Getting speech recognition ready on your device…");
         }
       });
+      if (generation !== modelGeneration.current) return;
+      if (activateAfterLoad && !(await updateSettings({ localModel: model })))
+        throw new Error("The model is downloaded, but its selection could not be saved. Your previous model is still selected.");
       if (generation !== modelGeneration.current) return;
       setReadyModel(model);
       setModelProgress(100);
@@ -813,7 +799,7 @@ function App() {
   async function beginRecording(
     requestedMode: "dictate" | "command" = "dictate",
   ) {
-    if (!loaded || phaseRef.current !== "idle" || loadingModel || backgroundBusy || native?.backgroundBusy?.()) return;
+    if (!loaded || phaseRef.current !== "idle" || loadingModel || auxBusy || backgroundBusy || native?.backgroundBusy?.()) return;
     setActionError("");
     setRetryRecord(null);
     processingRecord.current=null;
@@ -923,7 +909,7 @@ function App() {
     }
   }
   async function stopRecording(recovery?: Transcript) {
-    if (recovery ? phaseRef.current !== "idle" || backgroundBusy || native?.backgroundBusy?.() : phaseRef.current !== "recording") return;
+    if (recovery ? phaseRef.current !== "idle" || auxBusy || backgroundBusy || native?.backgroundBusy?.() : phaseRef.current !== "recording") return;
     setActionError("");
     setPhase("transcribing");
     phaseRef.current = "transcribing";
@@ -1551,7 +1537,7 @@ function App() {
   const recordButton = (
     <button
       className={`record-button ${isRecording ? "recording" : ""} ${isWorking ? "working" : ""}`}
-      disabled={!loaded || isWorking || !!loadingModel || backgroundBusy}
+      disabled={!loaded || isWorking || !!loadingModel || auxBusy || backgroundBusy}
       aria-label={isWorking ? "Working on dictation" : undefined}
       onPointerDown={(e) => e.preventDefault()}
       onClick={() => actionRef.current()}
@@ -1627,10 +1613,11 @@ function App() {
           <p>{t.raw}</p>
           <span className="transcript-meta">Speech: {t.model}{t.editingModel?` · Writing: ${t.editingModel}`:""}{t.requestedEditingModel&&t.requestedEditingModel!==t.editingModel?` · Configured: ${t.requestedEditingModel}`:""}</span>
         </details>}
+        {!compact&&t.text&&settings.voiceModel==="piper-alba"&&<ReadAloud text={t.text} disabled={phase!=="idle"||backgroundBusy||auxBusy}/>}
         {!compact && t.audioId && t.status !== "recording" && <div className="recording-recovery">
           {t.error && <p className="recording-error">{t.error}</p>}
           <SavedAudio id={t.audioId}/>
-          <button className="text-button" disabled={phase !== "idle" || backgroundBusy} onClick={()=>void stopRecording(t)}><RotateCcw size={14}/>{t.status === "failed" || !t.text ? "Retry saved audio" : "Reprocess audio"}</button>
+          <button className="text-button" disabled={phase !== "idle" || auxBusy || backgroundBusy} onClick={()=>void stopRecording(t)}><RotateCcw size={14}/>{t.status === "failed" || !t.text ? "Retry saved audio" : "Reprocess audio"}</button>
           {t.processingMs !== undefined && t.status === "complete" && <span className="transcript-meta">Ready in {(t.processingMs/1000).toFixed(1)}s after recording</span>}
         </div>}
       </article>
@@ -1671,7 +1658,7 @@ function App() {
         >
           <button
             className={settings.provider === "local" ? "selected" : ""}
-            disabled={!!loadingModel || phase !== "idle"}
+            disabled={!!loadingModel || auxBusy || phase !== "idle"}
             onClick={() => void updateSettings({ provider: "local" })}
           >
             <HardDrive size={18} />
@@ -1680,7 +1667,7 @@ function App() {
           </button>
           <button
             className={settings.provider !== "local" ? "selected" : ""}
-            disabled={!!loadingModel || phase !== "idle"}
+            disabled={!!loadingModel || auxBusy || phase !== "idle"}
             onClick={() => void updateSettings({ provider: "openai" })}
           >
             <Cloud size={18} />
@@ -1695,11 +1682,12 @@ function App() {
               <div>
                 <strong>Your voice stays with you.</strong>
                 <p>
-                  Download a model here, then dictate offline. Parakeet processes
-                  speech in segments while you talk. No account or subscription.
+                  Download a model here, then dictate offline. Speech recognition
+                  runs while you talk. No account or subscription.
                 </p>
               </div>
             </div>
+            <p className="section-description">Download and use a model to switch after it is verified and ready. Your existing selection and saved recordings are kept if the download fails or is cancelled. Keeping both Parakeet models needs about 671 MB of extra storage.</p>
             <div className="model-list">
               {speechModelOptions().map((model) => (
                 <article
@@ -1712,9 +1700,9 @@ function App() {
                       name="localModel"
                       id={`model-${model}`}
                       checked={settings.localModel === model}
-                      disabled={!!loadingModel || phase !== "idle"}
+                      disabled={!!loadingModel || auxBusy || phase !== "idle" || !cachedModels.includes(model)}
                       onChange={() =>
-                        void updateSettings({ localModel: model })
+                        void prepareModel(model, true)
                       }
                     />
                   </div>
@@ -1734,13 +1722,13 @@ function App() {
                     </span>
                   </div>
                   <button
-                    className={`button ${readyModel === model ? "muted" : "secondary"}`}
+                    className={`button ${readyModel === model && settings.localModel === model ? "muted" : "secondary"}`}
                     disabled={
-                      !!loadingModel || phase !== "idle" || readyModel === model || !native?.prepareNativeSpeech
+                      !!loadingModel || auxBusy || phase !== "idle" || readyModel === model && settings.localModel === model || !native?.prepareNativeSpeech
                     }
-                    onClick={() => void prepareModel(model)}
+                    onClick={() => void prepareModel(model, true)}
                   >
-                    {readyModel === model ? (
+                    {readyModel === model && settings.localModel === model ? (
                       <Check size={16} />
                     ) : loadingModel === model ? (
                       <LoaderCircle size={16} className="spin" />
@@ -1748,20 +1736,20 @@ function App() {
                       <Download size={16} />
                     )}
                     <span>
-                      {readyModel === model
+                      {readyModel === model && settings.localModel === model
                         ? "Ready"
                         : loadingModel === model
                           ? "Loading…"
                           : cachedModels.includes(model)
-                            ? "Load model"
-                            : "Download"}
+                            ? "Use model"
+                            : "Download and use"}
                     </span>
                   </button>
                   {cachedModels.includes(model) && (
                     <button
                       className="icon-button delete model-remove"
                       aria-label={`Remove ${models[model].name}`}
-                      disabled={!!loadingModel || phase !== "idle"}
+                      disabled={!!loadingModel || auxBusy || phase !== "idle"}
                       onClick={() =>
                         setConfirm({
                           title: "Remove this downloaded model?",
@@ -1790,7 +1778,8 @@ function App() {
                 </article>
               ))}
             </div>
-            <DeviceGuidance withWriting={settings.editingProvider === "local"} />
+            <DeviceGuidance model={settings.localModel} withWriting={settings.editingProvider === "local"} />
+            <ModelTrials history={history} cached={cachedModels} language={settings.language} recognitionMode={settings.recognitionMode} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
           </>
         ) : (
           <div className="cloud-panel panel">
@@ -1936,13 +1925,14 @@ function App() {
             </div>
           </div>
         )}
-        <EditingSettings
+        <div inert={auxBusy}><EditingSettings
           settings={settings}
           update={updateSettings}
           download={editing}
           initialKey={editingKey}
           saveKey={saveEditingKey}
-        />
+        /></div>
+        <VoiceSettings settings={settings} update={updateSettings} disabled={phase!=="idle"||!!loadingModel||!!editing.loading||backgroundBusy||auxBusy} onBusy={setAuxBusy}/>
         <div className="bottom-note">
           <HelpCircle size={16} />
           <span>
@@ -2129,7 +2119,7 @@ function App() {
                 <div className="record-panel-footer">
                   <div className="inline-select"><Globe size={15} />
                     <select aria-label="Dictation language" value={settings.language} disabled={phase !== "idle"} onChange={(e) => void updateSettings({language: e.target.value})}>
-                      {languageOptions(settings.provider).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
+                      {languageOptions(settings.provider,settings.localModel).map(([v,label]) => <option key={v} value={v}>{label}</option>)}
                     </select><ChevronDown size={12} />
                   </div>
                   <div className="inline-select"><Sparkles size={14} />
@@ -2275,7 +2265,7 @@ function App() {
                 <div>
                   <h1>A language of your own.</h1>
                   <p>
-                    Names, favorite phrases, and all the words that make you,
+                    Names, favourite phrases, and all the words that make you,
                     you.
                   </p>
                 </div>
@@ -2317,7 +2307,7 @@ function App() {
                   </strong>
                   <p>
                     {dictionaryTab === "words"
-                      ? "Give a name or term its correct spelling. After transcription, Murmur replaces the phrase you specify."
+                      ? "Give a name or term its correct spelling. Accurate Parakeet recognition uses these terms as hints. Saved replacements also fix the phrase you specify."
                       : "Create a phrase like “my email signature” and expand it into your saved text."}{" "}
                     These apply in Natural and Polished styles.
                   </p>
@@ -2943,6 +2933,9 @@ function App() {
           </div>
           <details className="original-transcription">
             <summary>Local model credits</summary>
+            <p>
+              Parakeet Ultra by <a href="https://huggingface.co/moondream/parakeet-ultra" target="_blank" rel="noreferrer">Moondream</a>, based on NVIDIA Parakeet TDT v3, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. The INT8 ONNX conversion is by <a href="https://huggingface.co/tpmaerk/parakeet-ultra-sherpa-onnx-int8" target="_blank" rel="noreferrer">tpmaerk</a>; its extra VAD head is omitted. Murmur does not fine-tune the weights.
+            </p>
             <p>
               Parakeet TDT v3 by <a href="https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3" target="_blank" rel="noreferrer">NVIDIA</a>, licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">CC BY 4.0</a>. The INT8 ONNX conversion is by csukuangfj; Murmur does not fine-tune the weights.
             </p>

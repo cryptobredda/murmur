@@ -1,0 +1,1 @@
+0.10.0: Try Parakeet Ultra for local speech recognition. Existing users keep their current model, history and recordings. In Models, choose Parakeet Ultra → Download and use; switching happens after it is verified and ready. Compare it with the original on the same saved audio.

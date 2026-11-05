@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.10.0 — Parakeet Ultra tester update
+
+- Recommend Parakeet Ultra INT8 for new installations, with a pinned 671 MB in-app download and the existing offline CPU/dictionary-guided recognition engine.
+- Preserve existing testers' chosen models, downloads, setup, history, audio, personal vocabulary and provider configuration.
+- Add Download and use: switch selection only after the new model is verified and loaded. Failed/cancelled downloads retain the previous selection; the original Parakeet remains available for comparison or switching back.
+- Add model provenance/licence notices, a reproducible native-model smoke check, upgrade/cancellation tests and a publishing-agent handoff.
+- Source version code 10, version 0.10.0. The publishing agent must check the highest Play version code and use the existing application ID/signing identity.
+
+See [ULTRA-UPDATE.md](docs/ULTRA-UPDATE.md). No Play upload or production signing is performed by this source update.
+
+## 0.9.0 — release candidate
+
+- Keep Parakeet as the default; use personal terms during recognition in Accurate mode, with the original decoder when no terms are saved or Fast is selected.
+- Preserve more context through short pauses and retry empty wider-search output using the same audio.
+- Default English cleanup to British spelling while protecting code, literals and personal terms.
+- Learn conservative short phrase corrections and import background corrections without reopening Murmur, acknowledging only successful dictionary writes.
+- Add an Accessibility disclosure/consent and publisher/support/privacy links.
+- Target Android API 36, update the build tools, migrate predictive back handling and configure optional owner-controlled upload signing.
+- Include a Zyralabs store pack: Play copy, privacy/declaration guides, five listing pictures, icons and a feature graphic. iOS branding/copy are drafts; the iOS app is deferred.
+
+Testing APK version: `0.9.0-test`. No production signing credentials or store submission are included. [Accuracy details and validation limits](docs/BRITISH-ENGLISH.md).
+
+## 0.8.0-test — model trials
+
+- Add experimental Nemotron streaming models and optional Piper Alba offline English readback.
+- Compare downloaded speech models against the same saved audio; optionally measure against reference text and export results.
+- Keep Parakeet selected by default. Experimental models do not establish a general mobile accuracy/speed improvement.
+
 ## 0.7.0-test — public review
 
 - Parakeet TDT v3 as the sole local speech model, with verified in-app downloads.

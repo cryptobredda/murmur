@@ -9,7 +9,7 @@
 An open-source Android speech-to-text app with a floating dictation button, local AI, saved recordings, and optional writing assistance. Turn thoughts into messages, notes, and emails using your existing keyboard.
 
 [![Android](https://img.shields.io/badge/Android-8%2B-286557?logo=android&logoColor=white)](#device-requirements)
-[![Local speech](https://img.shields.io/badge/Speech-Parakeet_TDT_v3-286557)](#local-models)
+[![Local speech](https://img.shields.io/badge/Speech-Parakeet_Ultra-286557)](#local-models)
 [![Offline](https://img.shields.io/badge/Works-offline-286557)](#privacy)
 [![License](https://img.shields.io/badge/App_license-MIT-c78263)](LICENSE)
 
@@ -23,7 +23,7 @@ Murmur is a free, independent alternative to subscription voice typing tools suc
 
 **No Murmur account. No subscription. No local word quota.** Local dictation works offline after the models download. Optional cloud providers use your credentials and may charge for usage.
 
-**Status:** Android preview, `0.7.0-test`, prepared for public review. [Build from source](docs/BUILDING.md) today. Prebuilt APKs will appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. Google Play and iOS releases are future work.
+**Status:** Android tester update, `0.10.0`, by **Zyralabs**. Parakeet Ultra is recommended for new installations. Existing users keep their chosen model until they download and use another. [Ultra changes and publishing handoff](docs/ULTRA-UPDATE.md) · [Build from source](docs/BUILDING.md) · [Play Store pack](store/README.md). Prebuilt APKs appear on [Releases](https://github.com/cryptobredda/murmur/releases) when the maintainer publishes them. The iOS app remains deferred.
 
 ## Take a look
 
@@ -67,7 +67,8 @@ App screens use the bundled UI with fictional data and a simulated Android bridg
 
 ### Your vocabulary. Your voice.
 
-- Personal dictionary for names/terms, spoken snippets, and learning from transcript corrections.
+- Personal dictionary for names/terms, spoken snippets, and conservative short phrase learning from transcript corrections, including recent background insertions.
+- Accurate Parakeet decoding can use your dictionary targets while recognising speech; Fast retains the original decoder. British English spelling is configurable. [Changes and accuracy limits →](docs/BRITISH-ENGLISH.md)
 - Smart cleanup for fillers, punctuation commands, self-corrections, and lists.
 - Natural, polished, and verbatim styles; neutral, formal, and casual tones.
 - Configurable writing profiles for email, messages, work chat, notes, and code.
@@ -84,7 +85,7 @@ App screens use the bundled UI with fictional data and a simulated Android bridg
 ## Get started
 
 1. Install a maintainer-published [release APK](https://github.com/cryptobredda/murmur/releases), or [build one](docs/BUILDING.md).
-2. Follow onboarding and **download Parakeet inside Murmur**. Downloads verify pinned SHA-256 checksums and support cancellation/resume.
+2. Follow onboarding and **download a speech model inside Murmur** (Parakeet Ultra is recommended for new installations). Existing users can choose **Models → Parakeet Ultra → Download and use**. Selection switches after verification/loading succeeds. Downloads verify pinned SHA-256 checksums and support cancellation/resume.
 3. Keep Smart cleanup for the lightest setup, or download optional Qwen3 writing inside the app. Cloud is optional.
 4. Grant microphone access and enable Murmur's accessibility service for cross-app dictation/insertion.
 5. Open a supported field, tap the logo, speak, and tap the waveform to finish. Cancel is available while listening or processing.
@@ -95,13 +96,17 @@ All model setup happens in the app. No manual model-file downloads or transfers.
 
 | Purpose | Model | Runtime | Download |
 | --- | --- | --- | --- |
-| Speech-to-text | NVIDIA Parakeet TDT 0.6B v3, INT8 | Sherpa-ONNX, CPU | Approximately 670 MB |
+| Recommended speech-to-text | Moondream Parakeet Ultra, INT8 | Sherpa-ONNX, CPU | Approximately 671 MB |
+| Original speech-to-text | NVIDIA Parakeet TDT 0.6B v3, INT8 | Sherpa-ONNX, CPU | Approximately 670 MB |
+| Experimental multilingual speech | Nemotron 3.5 ASR Streaming 0.6B, Q8 | NeMo-Speech.cpp, CPU | Approximately 742 MB |
+| Experimental English speech | Nemotron Speech Streaming English 0.6B, Q8 | NeMo-Speech.cpp, CPU | Approximately 700 MB |
+| Optional offline readback | Piper Alba medium, British English | Sherpa-ONNX VITS, CPU | Approximately 64 MB |
 | Optional AI writing | Qwen3 1.7B, INT4 | LiteRT-LM, GPU with CPU fallback | Approximately 977 MB |
 | Lightweight writing | Smart cleanup | Built-in rules | None |
 
 Parakeet provides punctuation/capitalization and supports **25 European languages**: Bulgarian, Croatian, Czech, Danish, Dutch, English, Estonian, Finnish, French, German, Greek, Hungarian, Italian, Latvian, Lithuanian, Maltese, Polish, Portuguese, Romanian, Russian, Slovak, Slovenian, Spanish, Swedish, and Ukrainian.
 
-The native catalogue intentionally offers one speech model and one optional writing model. [Sources, pinned revisions, and licences →](MODEL-NOTICES.md)
+Ultra and the original Parakeet use separate downloads, so existing users can keep their working model and compare the same saved recording. Ultra uses further-trained weights; its publisher's full-precision GPU results do not establish Android INT8 speed or British-accent accuracy. Nemotron remains experimental. The in-app comparison accepts optional exact reference text for word-error measurement. Piper provides manual English readback in History. [Ultra update and validation →](docs/ULTRA-UPDATE.md) [Earlier model trials →](docs/MOBILE-MODELS.md) [Sources, pinned revisions, and licences →](MODEL-NOTICES.md)
 
 ## Device requirements
 
@@ -109,7 +114,7 @@ The native catalogue intentionally offers one speech model and one optional writ
 | --- | --- |
 | Speech + Smart cleanup | **8 GB RAM**, **1.5 GB free storage** before download |
 | Speech + Qwen3 writing | **12 GB RAM**, **3 GB free storage** before downloads |
-| Android / processor | **Android 13+**, recent flagship ARM64 processor, such as Snapdragon 8 Gen 2, 8 Gen 3, or 8 Elite |
+| Android / processor | **Android 13+**, ARM64 Snapdragon 8-series, Dimensity 8000/9000-series or comparable processor |
 | Installation minimum | Android 8 / API 26 and ARM64 |
 
 These are practical recommendations, not vendor-certified phone minimums or guaranteed latency. Speed depends on recording length, RAM, processor, heat, and other apps. Android 13+ improves modern-editor insertion. Recordings need additional storage. Murmur shows guidance and device information during setup. [Sources and details →](docs/DEVICE-REQUIREMENTS.md)
@@ -135,7 +140,7 @@ cd android
 ./gradlew testDebugUnitTest lintDebug assembleDebug
 ```
 
-Requires Node.js 22+, JDK 21, and Android SDK 35. Output: `android/app/build/outputs/apk/debug/app-debug.apk`. Debug builds use your local signing key; updating an installed APK requires the same key. [Build guide →](docs/BUILDING.md)
+Requires Node.js 22+, Git, JDK 21, Android SDK 36, NDK 28.2.13676358 and CMake 3.31.6. Output: `android/app/build/outputs/apk/debug/app-debug.apk`. Debug builds use your local signing key; updating an installed APK requires the same key. [Build guide →](docs/BUILDING.md)
 
 Device reports, language feedback, docs, and focused contributions are welcome. Keep examples free of personal data. [Contributing →](CONTRIBUTING.md)
 
@@ -153,7 +158,9 @@ Device reports, language feedback, docs, and focused contributions are welcome. 
 
 ## Credits and licence
 
-App source: [MIT](LICENSE). Separately downloaded model weights retain their own licences: Parakeet **CC BY 4.0**, Qwen3 **Apache-2.0**. [MODEL-NOTICES.md](MODEL-NOTICES.md) records creators and quantized conversions. Sherpa-ONNX and LiteRT-LM use Apache-2.0. React/Lucide retain upstream licences; bundled DM Sans/Manrope fonts include SIL Open Font License files in `public/fonts/`.
+App source: [MIT](LICENSE). Separately downloaded model weights retain their own licences: Parakeet **CC BY 4.0**, Qwen3 **Apache-2.0**, multilingual Nemotron **OpenMDW 1.1**, English Nemotron **NVIDIA Open Model License**; the Piper Alba voice card credits a **CC BY 4.0** dataset. [MODEL-NOTICES.md](MODEL-NOTICES.md) records creators and quantized conversions. Sherpa-ONNX, LiteRT-LM and NeMo-Speech.cpp use Apache-2.0; Piper's eSpeak NG phonemizer is **GPL-3.0**, with corresponding source links and notices in the model guide. The MIT app-source licence does not override third-party binary obligations. React/Lucide retain upstream licences; bundled DM Sans/Manrope fonts include SIL Open Font License files in `public/fonts/`.
+
+Developed by **Zyralabs** · Support/privacy: **info@zyralabs.xyz** · [Android privacy policy](store/privacy-policy.md).
 
 <div align="center">
   <img src="docs/brand/murmur-icon.svg" width="40" alt="Murmur logo" />

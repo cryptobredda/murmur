@@ -67,6 +67,8 @@ export function formatText(raw, settings, words = [], snippets = []) {
     protectedSnippets.push(w.replacement);
     text = replacePhrase(text, w.spoken, token);
   }
+  if(!settings.codeMode&&settings.englishVariant==="en-GB"&&
+    (settings.language?.startsWith("en")||settings.language==="auto"&&/\b(?:the|your|you|this|that|with|would|please|have|our)\b/i.test(text)))text=britishSpelling(text);
   if (settings.voiceCommands) {
     const commands = [
       ["new paragraph", "\n\n"],
@@ -238,19 +240,37 @@ export function numberedLists(text) {
 }
 
 export function learnCorrection(before, after) {
+  if(/[{};=<>]|https?:\/\/|\S+@\S+/.test(before+after))return null;
   const a = before.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || [];
   const b = after.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || [];
-  if (a.length !== b.length) return null;
-  const changes = a
-    .map((value, i) => ({ spoken: value, replacement: b[i] }))
-    .filter((x) => x.spoken !== x.replacement);
-  if (
-    changes.length !== 1 ||
-    changes[0].spoken.length < 2 ||
-    changes[0].replacement.length < 2
-  )
-    return null;
-  return changes[0];
+  let start=0,endA=a.length,endB=b.length;
+  while(start<endA&&start<endB&&a[start]===b[start])start++;
+  while(endA>start&&endB>start&&a[endA-1]===b[endB-1]){endA--;endB--;}
+  const old=a.slice(start,endA),next=b.slice(start,endB);
+  if(!old.length||!next.length||old.length>4||next.length>4)return null;
+  if(old.length===1&&next.length>1&&old[0].toLowerCase()===next[0].toLowerCase())return null;
+  const spoken=old.join(" "),replacement=next.join(" ");
+  if(spoken.length<2||replacement.length<2||spoken.length>100||replacement.length>100)return null;
+  const unsafe=/^(?:\d+|no|not|never|yes|can|cannot|can't|could|couldn't|will|won't|should|shouldn't|don't|doesn't|isn't|wasn't|weren't|good|bad|true|false)$/i;
+  if([...old,...next].some(word=>unsafe.test(word.replaceAll("’","'"))||/^\p{N}+$/u.test(word)))return null;
+  if((spoken.match(/\p{N}+/gu)||[]).join()!==(replacement.match(/\p{N}+/gu)||[]).join())return null;
+  if(old.length>1||next.length>1){
+    const x=spoken.toLowerCase().replace(/[^\p{L}\p{N}]/gu,""),y=replacement.toLowerCase().replace(/[^\p{L}\p{N}]/gu,"");
+    let row=Array.from({length:y.length+1},(_,i)=>i);
+    for(let i=1;i<=x.length;i++){const nextRow=[i];for(let j=1;j<=y.length;j++)nextRow[j]=Math.min(nextRow[j-1]+1,row[j]+1,row[j-1]+(x[i-1]===y[j-1]?0:1));row=nextRow;}
+    if(1-row[y.length]/Math.max(x.length,y.length)<.72)return null;
+  }
+  return {spoken,replacement};
+}
+
+const britishWords={pediatric:"paediatric",pediatrics:"paediatrics",pediatrician:"paediatrician",anesthetic:"anaesthetic",anesthetist:"anaesthetist",anesthesia:"anaesthesia",color:"colour",colors:"colours",colored:"coloured",colorful:"colourful",favorite:"favourite",favorites:"favourites",favor:"favour",favors:"favours",honor:"honour",honors:"honours",honored:"honoured",neighbor:"neighbour",neighbors:"neighbours",organize:"organise",organized:"organised",organizing:"organising",organization:"organisation",organizations:"organisations",recognize:"recognise",recognized:"recognised",recognizing:"recognising",analyze:"analyse",analyzed:"analysed",analyzing:"analysing",center:"centre",centers:"centres",theater:"theatre",theaters:"theatres",defense:"defence",aluminum:"aluminium",traveling:"travelling",traveled:"travelled",canceled:"cancelled",canceling:"cancelling",gray:"grey"};
+export function britishSpelling(text){
+  // Quoted literals, identifiers, links and email addresses retain their exact spelling.
+  return text.replace(/`[^`]*`|https?:\/\/\S+|\b\S+@\S+|"[^"\n]*"|(?<![\p{L}\p{N}])'[^'\n]*'(?![\p{L}\p{N}])|\b[\p{L}_][\w]*(?:[./][\w-]+)+\b|\b[\p{L}]+\b/gu,word=>{
+    const replacement=britishWords[word.toLowerCase()];if(!replacement)return word;
+    if(word===word.toUpperCase())return word;
+    return /^[A-Z]/.test(word)?replacement[0].toUpperCase()+replacement.slice(1):replacement;
+  });
 }
 export function chooseProfile(profiles, packageName) {
   if (!packageName) return null;
